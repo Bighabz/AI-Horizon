@@ -1,0 +1,2043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Horizon - Research Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary-color: #10b981;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #475569;
+            --replace: #ef4444;
+            --augment: #f59e0b;
+            --remain: #10b981;
+            --new-task: #3b82f6;
+            /* New colors from theaihorizon.org */
+            --orange-accent: #f97316;
+            --teal-accent: #14b8a6;
+            --beginner: #22c55e;
+            --intermediate: #eab308;
+            --advanced: #f97316;
+            --expert: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo-text h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover, .nav-tab.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .search-section h2 {
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: 2fr repeat(3, 1fr) auto;
+            gap: 1rem;
+            align-items: end;
+        }
+
+        .search-grid .search-btn {
+            height: fit-content;
+            align-self: end;
+            margin-bottom: 0;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group input, .form-group select {
+            padding: 0.75rem 1rem;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .search-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .search-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Classification Filters */
+        .classification-filters {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .filter-chip {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--text-secondary);
+        }
+
+        .filter-chip.active.replace {
+            background: var(--replace);
+            border-color: var(--replace);
+            color: white;
+        }
+
+        .filter-chip.active.augment {
+            background: var(--augment);
+            border-color: var(--augment);
+            color: black;
+        }
+
+        .filter-chip.active.remain {
+            background: var(--remain);
+            border-color: var(--remain);
+            color: white;
+        }
+
+        .filter-chip.active.new-task {
+            background: var(--new-task);
+            border-color: var(--new-task);
+            color: white;
+        }
+
+        /* Results Grid */
+        .results-section {
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .results-count {
+            color: var(--text-secondary);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Result Card */
+        .result-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .task-id {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: var(--surface-light);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .classification-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .classification-badge.replace {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--replace);
+        }
+
+        .classification-badge.augment {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--augment);
+        }
+
+        .classification-badge.remain {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--remain);
+        }
+
+        .classification-badge.new-task {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--new-task);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-description {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .confidence-bar {
+            flex: 1;
+            height: 4px;
+            background: var(--surface-light);
+            border-radius: 2px;
+            margin-right: 1rem;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .evidence-count {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .card-btn {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .card-btn:hover {
+            background: var(--surface-light);
+            color: var(--text-primary);
+        }
+
+        .card-btn.primary {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Chat Section */
+        .chat-section {
+            display: none;
+        }
+
+        .chat-section.active {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .chat-sidebar {
+            width: 280px;
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            height: fit-content;
+        }
+
+        .chat-sidebar h3 {
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .quick-action {
+            padding: 0.75rem;
+            background: var(--surface-light);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .quick-action:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .chat-container {
+            flex: 1;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 250px);
+        }
+
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            display: flex;
+            gap: 1rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+        }
+
+        .message.assistant .message-avatar {
+            background: linear-gradient(135deg, var(--secondary-color), #059669);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            line-height: 1.6;
+        }
+
+        .message.user .message-content {
+            background: var(--primary-color);
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: var(--surface-light);
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input-area {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 1rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            resize: none;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .send-btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .send-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Submit Section */
+        .submit-section {
+            display: none;
+        }
+
+        .submit-section.active {
+            display: block;
+        }
+
+        .submit-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .submit-card h2 {
+            margin-bottom: 0.5rem;
+        }
+
+        .submit-card p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .submit-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .submit-form textarea {
+            min-height: 150px;
+            padding: 1rem;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            resize: vertical;
+        }
+
+        .submit-form textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .submit-result {
+            background: var(--surface-light);
+            border-radius: 8px;
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .submit-result.show {
+            display: block;
+        }
+
+        /* File Upload */
+        .file-upload {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .file-upload.dragover {
+            border-color: var(--primary-color);
+            background: rgba(37, 99, 235, 0.2);
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .file-upload-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-info {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: var(--surface-light);
+            border-radius: 6px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+            max-width: 400px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .toast.success {
+            background: var(--remain);
+        }
+
+        .toast.error {
+            background: var(--replace);
+        }
+
+        .toast.info {
+            background: var(--primary-color);
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(100px); }
+        }
+
+        /* Classification Result Card */
+        .classification-result {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .classification-result h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .score-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: var(--surface-light);
+            border-radius: 8px;
+        }
+
+        .score-item .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .score-item .value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .dcwf-tasks-list {
+            margin-top: 1rem;
+        }
+
+        .dcwf-task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--surface-light);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .key-findings {
+            margin-top: 1rem;
+        }
+
+        .key-findings ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .key-findings li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .key-findings li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--primary-color);
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--surface-light);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Resource Type Badges */
+        .resource-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .resource-type-badge.video { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .resource-type-badge.course { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .resource-type-badge.certification { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+        .resource-type-badge.platform { background: rgba(20, 184, 166, 0.2); color: #14b8a6; }
+        .resource-type-badge.resource { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+        .resource-type-badge.article { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+        .resource-type-badge.tool { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .resource-type-badge.bootcamp { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+
+        /* Difficulty Badges */
+        .difficulty-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .difficulty-badge.beginner { background: rgba(34, 197, 94, 0.2); color: var(--beginner); }
+        .difficulty-badge.intermediate { background: rgba(234, 179, 8, 0.2); color: var(--intermediate); }
+        .difficulty-badge.advanced { background: rgba(249, 115, 22, 0.2); color: var(--advanced); }
+        .difficulty-badge.expert { background: rgba(239, 68, 68, 0.2); color: var(--expert); }
+
+        /* Free/Premium Badge */
+        .free-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .free-badge.free { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .free-badge.premium { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+
+        /* Stats Dashboard */
+        .stats-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-card .stat-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--orange-accent), var(--teal-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .stat-card .stat-badge {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(249, 115, 22, 0.1);
+            border: 1px solid var(--orange-accent);
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: var(--orange-accent);
+        }
+
+        /* Skills Section */
+        .skills-section {
+            display: none;
+        }
+
+        .skills-section.active {
+            display: block;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .skill-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .skill-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: var(--orange-accent);
+        }
+
+        .skill-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .skill-category {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(249, 115, 22, 0.1);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            color: var(--orange-accent);
+            border-radius: 4px;
+        }
+
+        .skill-priority {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .skill-priority.critical { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .skill-priority.high { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+        .skill-priority.moderate { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+
+        .skill-card h3 {
+            font-size: 1.125rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .skill-stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .skill-stats span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .skill-classifications {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .skill-class-pill {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .skill-class-pill.replace { background: rgba(239, 68, 68, 0.15); color: var(--replace); }
+        .skill-class-pill.augment { background: rgba(245, 158, 11, 0.15); color: var(--augment); }
+        .skill-class-pill.remain { background: rgba(16, 185, 129, 0.15); color: var(--remain); }
+
+        .skill-card-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Resource List in Skills Section */
+        .resource-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .resource-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--surface);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .resource-item:hover {
+            border-color: var(--primary-color);
+        }
+
+        .resource-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .resource-item-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .resource-item-meta {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .resource-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-view {
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-view:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-link {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            color: var(--teal-accent);
+            border: 1px solid var(--teal-accent);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-link:hover {
+            background: rgba(20, 184, 166, 0.1);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .search-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .chat-sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🔮</div>
+                <div class="logo-text">
+                    <h1>AI Horizon</h1>
+                    <p>Cybersecurity Workforce Research</p>
+                </div>
+            </div>
+            <nav class="nav-tabs">
+                <button class="nav-tab active" onclick="switchSection('explore')">🔍 Explore</button>
+                <button class="nav-tab" onclick="switchSection('skills')">📚 Skills</button>
+                <button class="nav-tab" onclick="switchSection('chat')">💬 Chat</button>
+                <button class="nav-tab" onclick="switchSection('submit')">📤 Submit Evidence</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Search Section -->
+        <section class="search-section">
+            <h2>🎯 Find Jobs & Tasks Impacted by AI</h2>
+            <div class="search-grid">
+                <div class="form-group">
+                    <label>Search</label>
+                    <input type="text" id="searchQuery" placeholder="e.g., threat analysis, vulnerability scanning...">
+                </div>
+                <div class="form-group">
+                    <label>Job Role</label>
+                    <select id="roleFilter">
+                        <option value="">All Roles</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>AI Tool</label>
+                    <select id="toolFilter">
+                        <option value="">All Tools</option>
+                        <option value="ChatGPT">ChatGPT</option>
+                        <option value="Copilot">GitHub Copilot</option>
+                        <option value="SOAR">SOAR Platforms</option>
+                        <option value="SIEM">AI-Powered SIEM</option>
+                        <option value="EDR">AI-Powered EDR</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>DCWF Task</label>
+                    <input type="text" id="taskFilter" placeholder="e.g., T0001">
+                </div>
+                <button class="search-btn" onclick="performSearch()">Search</button>
+            </div>
+            <div class="classification-filters">
+                <span style="color: var(--text-secondary); margin-right: 0.5rem;">Filter by impact:</span>
+                <button class="filter-chip replace" onclick="toggleFilter(this, 'Replace')">🔴 Replace</button>
+                <button class="filter-chip augment" onclick="toggleFilter(this, 'Augment')">🟡 Augment</button>
+                <button class="filter-chip remain" onclick="toggleFilter(this, 'Remain Human')">🟢 Remain Human</button>
+                <button class="filter-chip new-task" onclick="toggleFilter(this, 'New Task')">🔵 New Task</button>
+            </div>
+        </section>
+
+        <!-- Stats Dashboard -->
+        <section class="stats-dashboard" id="statsDashboard">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-value" id="statTotalResources">0</div>
+                <div class="stat-label">Total Resources</div>
+                <div class="stat-badge">AI-Enhanced</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🆓</div>
+                <div class="stat-value" id="statFreeResources">0</div>
+                <div class="stat-label">Free Resources</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-value" id="statTotalTasks">1,350</div>
+                <div class="stat-label">DCWF Tasks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📁</div>
+                <div class="stat-value" id="statResourceTypes">0</div>
+                <div class="stat-label">Resource Types</div>
+            </div>
+        </section>
+
+        <!-- Explore Results -->
+        <section class="results-section active" id="exploreSection">
+            <div class="results-header">
+                <h2>📊 Results</h2>
+                <span class="results-count" id="resultsCount">Loading...</span>
+            </div>
+            <div class="results-grid" id="resultsGrid">
+                <!-- Results populated by JS -->
+            </div>
+        </section>
+
+        <!-- Skills Section (Role-Based Navigation) -->
+        <section class="skills-section" id="skillsSection">
+            <div class="results-header">
+                <h2>📚 Skills & Learning Paths</h2>
+                <span class="results-count" id="skillsCount">Loading skills...</span>
+            </div>
+
+            <!-- Skills Filter Bar -->
+            <div class="search-section" style="margin-bottom: 1.5rem; padding: 1rem;">
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <input type="text" id="skillSearch" placeholder="Search skills..." onkeyup="filterSkills()">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="filter-chip active" onclick="filterSkillsByCategory(this, 'all')">All</button>
+                        <button class="filter-chip" onclick="filterSkillsByCategory(this, 'Protect and Defend')">Protect & Defend</button>
+                        <button class="filter-chip" onclick="filterSkillsByCategory(this, 'Analyze')">Analyze</button>
+                        <button class="filter-chip" onclick="filterSkillsByCategory(this, 'Securely Provision')">Securely Provision</button>
+                        <button class="filter-chip" onclick="filterSkillsByCategory(this, 'Operate and Maintain')">Operate & Maintain</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="skills-grid" id="skillsGrid">
+                <!-- Skills populated by JS -->
+            </div>
+
+            <!-- Resources for Selected Skill -->
+            <div id="skillResourcesPanel" style="display: none; margin-top: 2rem;">
+                <div class="results-header">
+                    <h2 id="skillResourcesTitle">Resources</h2>
+                    <button class="card-btn" onclick="closeSkillResources()">← Back to Skills</button>
+                </div>
+                <div class="resource-list" id="skillResourcesList">
+                    <!-- Resources populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Chat Section -->
+        <section class="chat-section" id="chatSection">
+            <aside class="chat-sidebar">
+                <h3>💡 Quick Questions</h3>
+                <div class="quick-actions">
+                    <button class="quick-action" onclick="askQuestion('What jobs are most at risk of being replaced by AI?')">Jobs at risk of replacement?</button>
+                    <button class="quick-action" onclick="askQuestion('Which cybersecurity skills will remain valuable?')">Skills that remain valuable?</button>
+                    <button class="quick-action" onclick="askQuestion('What new jobs is AI creating?')">New jobs from AI?</button>
+                    <button class="quick-action" onclick="askQuestion('Show me evidence for Security Analyst impact')">Security Analyst impact?</button>
+                    <button class="quick-action" onclick="askQuestion('How can I prepare for AI in cybersecurity?')">How to prepare?</button>
+                </div>
+            </aside>
+            <div class="chat-container">
+                <div class="messages-area" id="messagesArea">
+                    <div class="message assistant">
+                        <div class="message-avatar">🤖</div>
+                        <div class="message-content">
+                            Hi! I'm the AI Horizon Research Assistant. I can help you understand how AI is impacting cybersecurity careers.<br><br>
+                            Ask me about specific jobs, DCWF tasks, or browse our evidence database. You can also submit new evidence for classification!
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <textarea class="chat-input" id="chatInput" placeholder="Ask about AI's impact on cybersecurity jobs..." rows="1" onkeypress="handleKeyPress(event)"></textarea>
+                    <button class="send-btn" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Submit Section -->
+        <section class="submit-section" id="submitSection">
+            <div class="submit-card">
+                <h2>📤 Submit Evidence</h2>
+                <p>Help us build our research database by submitting articles, videos, or documents that demonstrate AI's impact on cybersecurity work.</p>
+                <div class="submit-form">
+                    <div class="form-group">
+                        <label>URL (YouTube, TikTok, Article, etc.)</label>
+                        <input type="url" id="submitUrl" placeholder="https://youtube.com/watch?v=... or any article URL">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Or upload a file</label>
+                        <div class="file-upload" id="fileUploadZone">
+                            <input type="file" id="submitFile" accept=".pdf,.docx,.doc,.txt,.xlsx,.xls">
+                            <div class="file-upload-icon">📁</div>
+                            <p>Drop file here or click to browse</p>
+                            <small style="color: var(--text-secondary);">PDF, Word, Excel, or Text files</small>
+                        </div>
+                        <div class="file-info" id="fileInfo">
+                            <span id="fileName"></span>
+                            <button onclick="clearFile()" style="background: none; border: none; color: var(--replace); cursor: pointer;">✕ Remove</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Title (optional)</label>
+                        <input type="text" id="submitTitle" placeholder="Descriptive title for this evidence">
+                    </div>
+                    <div class="form-group">
+                        <label>Or paste content directly</label>
+                        <textarea id="submitContent" placeholder="Paste article text, transcript, or key quotes here..."></textarea>
+                    </div>
+                    <button class="search-btn" onclick="submitEvidence()" id="submitBtn">🚀 Submit & Classify</button>
+                </div>
+                <div class="submit-result" id="submitResult">
+                    <!-- Results shown here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // Configuration - use relative path for same-origin requests
+        const API_BASE = '';  // Empty = same origin (no CORS issues)
+        const SESSION_ID = localStorage.getItem('horizon_session') || crypto.randomUUID();
+        localStorage.setItem('horizon_session', SESSION_ID);
+
+        let activeFilters = [];
+
+        let selectedFile = null;
+
+        // Global state for skills
+        let allSkills = [];
+        let currentSkillCategory = 'all';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRoles();
+            loadStats();
+            performSearch();
+            setupFileUpload();
+        });
+
+        // Load stats for dashboard
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/api/stats`);
+                const data = await response.json();
+
+                document.getElementById('statTotalResources').textContent = data.total_resources || 0;
+                document.getElementById('statFreeResources').textContent = data.free_resources || 0;
+                document.getElementById('statTotalTasks').textContent = (data.total_tasks || 1350).toLocaleString();
+                document.getElementById('statResourceTypes').textContent = Object.keys(data.resource_types || {}).length;
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // File upload setup
+        function setupFileUpload() {
+            const zone = document.getElementById('fileUploadZone');
+            const input = document.getElementById('submitFile');
+
+            zone.addEventListener('click', () => input.click());
+
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('dragover');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    handleFileSelect(e.dataTransfer.files[0]);
+                }
+            });
+
+            input.addEventListener('change', (e) => {
+                if (e.target.files.length) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+        }
+
+        function handleFileSelect(file) {
+            const allowedTypes = ['.pdf', '.docx', '.doc', '.txt', '.xlsx', '.xls'];
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+
+            if (!allowedTypes.includes(ext)) {
+                showToast('Please upload a PDF, Word, Excel, or Text file', 'error');
+                return;
+            }
+
+            selectedFile = file;
+            document.getElementById('fileName').textContent = `📄 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            document.getElementById('fileInfo').classList.add('show');
+            showToast(`File "${file.name}" selected`, 'success');
+        }
+
+        function clearFile() {
+            selectedFile = null;
+            document.getElementById('submitFile').value = '';
+            document.getElementById('fileInfo').classList.remove('show');
+        }
+
+        // Section switching
+        function switchSection(section) {
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.results-section, .chat-section, .submit-section, .skills-section').forEach(s => s.classList.remove('active'));
+
+            event.target.classList.add('active');
+
+            if (section === 'explore') {
+                document.getElementById('exploreSection').classList.add('active');
+                document.getElementById('statsDashboard').style.display = 'grid';
+            } else if (section === 'skills') {
+                document.getElementById('skillsSection').classList.add('active');
+                document.getElementById('statsDashboard').style.display = 'grid';
+                loadSkills();
+            } else if (section === 'chat') {
+                document.getElementById('chatSection').classList.add('active');
+                document.getElementById('statsDashboard').style.display = 'none';
+            } else if (section === 'submit') {
+                document.getElementById('submitSection').classList.add('active');
+                document.getElementById('statsDashboard').style.display = 'none';
+            }
+        }
+
+        // Load skills for role-based navigation
+        async function loadSkills() {
+            const grid = document.getElementById('skillsGrid');
+            grid.innerHTML = '<div class="loading"><div class="spinner"></div> Loading skills...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/skills`);
+                const data = await response.json();
+
+                allSkills = data.skills || [];
+                document.getElementById('skillsCount').textContent = `${allSkills.length} work roles`;
+                displaySkills(allSkills);
+            } catch (error) {
+                console.error('Failed to load skills:', error);
+                grid.innerHTML = '<p style="color: var(--text-secondary);">Failed to load skills. Make sure the API is running.</p>';
+            }
+        }
+
+        // Display skills in grid
+        function displaySkills(skills) {
+            const grid = document.getElementById('skillsGrid');
+
+            if (skills.length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-secondary);">No skills found. Submit some evidence to populate skills!</p>';
+                return;
+            }
+
+            grid.innerHTML = skills.map(skill => {
+                const priorityClass = skill.priority.toLowerCase().replace(' priority', '');
+                const totalClassifications = Object.values(skill.classifications).reduce((a, b) => a + b, 0);
+
+                return `
+                    <div class="skill-card" onclick="showSkillResources('${skill.name}')">
+                        <div class="skill-card-header">
+                            <span class="skill-category">${skill.category}</span>
+                            <span class="skill-priority ${priorityClass}">${skill.priority}</span>
+                        </div>
+                        <h3>${skill.name}</h3>
+                        <div class="skill-stats">
+                            <span>📚 ${skill.total_resources} resources</span>
+                            <span>🆓 ${skill.free_resources} free</span>
+                        </div>
+                        <div class="skill-classifications">
+                            ${skill.classifications.Replace > 0 ? `<span class="skill-class-pill replace">🔴 ${skill.classifications.Replace}</span>` : ''}
+                            ${skill.classifications.Augment > 0 ? `<span class="skill-class-pill augment">🟡 ${skill.classifications.Augment}</span>` : ''}
+                            ${skill.classifications['Remain Human'] > 0 ? `<span class="skill-class-pill remain">🟢 ${skill.classifications['Remain Human']}</span>` : ''}
+                        </div>
+                        <div class="skill-card-actions">
+                            <button class="card-btn primary" onclick="event.stopPropagation(); showSkillResources('${skill.name}')">View Resources →</button>
+                            <button class="card-btn" onclick="event.stopPropagation(); askAboutRole('${skill.name}')">💬 Ask AI</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Filter skills by search text
+        function filterSkills() {
+            const searchText = document.getElementById('skillSearch').value.toLowerCase();
+            const filtered = allSkills.filter(skill => {
+                const matchesSearch = skill.name.toLowerCase().includes(searchText) ||
+                    skill.category.toLowerCase().includes(searchText);
+                const matchesCategory = currentSkillCategory === 'all' ||
+                    skill.category === currentSkillCategory;
+                return matchesSearch && matchesCategory;
+            });
+            displaySkills(filtered);
+        }
+
+        // Filter skills by category
+        function filterSkillsByCategory(btn, category) {
+            document.querySelectorAll('#skillsSection .filter-chip').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentSkillCategory = category;
+            filterSkills();
+        }
+
+        // Show resources for a specific skill
+        async function showSkillResources(skillName) {
+            const panel = document.getElementById('skillResourcesPanel');
+            const grid = document.getElementById('skillsGrid');
+            const list = document.getElementById('skillResourcesList');
+
+            document.getElementById('skillResourcesTitle').textContent = `📚 ${skillName} Resources`;
+            grid.style.display = 'none';
+            panel.style.display = 'block';
+
+            list.innerHTML = '<div class="loading"><div class="spinner"></div> Loading resources...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/resources?role=${encodeURIComponent(skillName)}`);
+                const data = await response.json();
+
+                if (data.resources.length === 0) {
+                    list.innerHTML = '<p style="color: var(--text-secondary);">No resources found for this skill yet. Submit some evidence!</p>';
+                    return;
+                }
+
+                list.innerHTML = data.resources.map(resource => {
+                    const typeClass = (resource.resource_type || 'article').toLowerCase();
+                    const diffClass = (resource.difficulty || 'beginner').toLowerCase();
+                    const typeIcon = getResourceTypeIcon(resource.resource_type);
+
+                    return `
+                        <div class="resource-item">
+                            <div class="resource-item-info">
+                                <div class="resource-item-title">${resource.title}</div>
+                                <div class="resource-item-meta">
+                                    <span class="resource-type-badge ${typeClass}">${typeIcon} ${resource.resource_type || 'Article'}</span>
+                                    <span class="difficulty-badge ${diffClass}">${resource.difficulty || 'Beginner'}</span>
+                                    <span class="free-badge ${resource.is_free ? 'free' : 'premium'}">${resource.is_free ? '✓ Free' : '👑 Premium'}</span>
+                                    ${resource.classification ? `<span class="classification-badge ${resource.classification.toLowerCase().replace(' ', '-')}">${resource.classification}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="resource-item-actions">
+                                <button class="btn-view" onclick="askAboutResource('${resource.artifact_id}', '${resource.title.replace(/'/g, "\\'")}')">Details</button>
+                                ${resource.source_url ? `<a href="${resource.source_url}" target="_blank" class="btn-link">Direct Link</a>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load resources:', error);
+                list.innerHTML = '<p style="color: var(--text-secondary);">Failed to load resources.</p>';
+            }
+        }
+
+        // Close skill resources panel
+        function closeSkillResources() {
+            document.getElementById('skillResourcesPanel').style.display = 'none';
+            document.getElementById('skillsGrid').style.display = 'grid';
+        }
+
+        // Get icon for resource type
+        function getResourceTypeIcon(type) {
+            const icons = {
+                'Video': '🎥',
+                'Course': '📖',
+                'Certification': '🏆',
+                'Platform': '🌐',
+                'Resource': '📄',
+                'Article': '📰',
+                'Tool': '🔧',
+                'Bootcamp': '🎓'
+            };
+            return icons[type] || '📄';
+        }
+
+        // Ask AI about a role
+        function askAboutRole(roleName) {
+            switchSection('chat');
+            // Need to manually activate chat tab
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-tab')[2].classList.add('active'); // Chat is 3rd tab now
+            document.querySelectorAll('.results-section, .chat-section, .submit-section, .skills-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('chatSection').classList.add('active');
+            document.getElementById('statsDashboard').style.display = 'none';
+            askQuestion(`Tell me about the ${roleName} role and how AI is impacting it. What skills should I develop?`);
+        }
+
+        // Ask AI about a specific resource
+        function askAboutResource(artifactId, title) {
+            switchSection('chat');
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-tab')[2].classList.add('active');
+            document.querySelectorAll('.results-section, .chat-section, .submit-section, .skills-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('chatSection').classList.add('active');
+            document.getElementById('statsDashboard').style.display = 'none';
+            askQuestion(`Tell me more about the evidence "${title}". What are its key findings and implications?`);
+        }
+
+        // Load roles for dropdown
+        async function loadRoles() {
+            try {
+                const response = await fetch(`${API_BASE}/api/roles`);
+                const data = await response.json();
+                
+                const select = document.getElementById('roleFilter');
+                data.roles.forEach(role => {
+                    const option = document.createElement('option');
+                    option.value = role.name;
+                    option.textContent = `${role.name} (${role.category})`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load roles:', error);
+            }
+        }
+
+        // Toggle classification filter
+        function toggleFilter(btn, classification) {
+            btn.classList.toggle('active');
+            
+            if (btn.classList.contains('active')) {
+                activeFilters.push(classification);
+            } else {
+                activeFilters = activeFilters.filter(f => f !== classification);
+            }
+            
+            performSearch();
+        }
+
+        // Perform search
+        async function performSearch() {
+            const query = document.getElementById('searchQuery').value;
+            const role = document.getElementById('roleFilter').value;
+            const tool = document.getElementById('toolFilter').value;
+            const task = document.getElementById('taskFilter').value;
+            
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = '<div class="loading"><div class="spinner"></div> Searching...</div>';
+            
+            try {
+                const params = new URLSearchParams();
+                if (query) params.append('query', query);
+                if (role) params.append('job_role', role);
+                if (tool) params.append('ai_tool', tool);
+                if (task) params.append('dcwf_task', task);
+                if (activeFilters.length === 1) params.append('classification', activeFilters[0]);
+                
+                const response = await fetch(`${API_BASE}/api/search?${params}`);
+                const data = await response.json();
+                
+                displayResults(data.results || []);
+            } catch (error) {
+                console.error('Search error:', error);
+                grid.innerHTML = `<p>Error loading results. Make sure the API is running at ${API_BASE}</p>`;
+            }
+        }
+
+        // Display search results
+        function displayResults(results) {
+            const grid = document.getElementById('resultsGrid');
+            const count = document.getElementById('resultsCount');
+            
+            // Filter by active classifications
+            let filtered = results;
+            if (activeFilters.length > 0) {
+                filtered = results.filter(r => activeFilters.includes(r.classification));
+            }
+            
+            count.textContent = `${filtered.length} results`;
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-secondary);">No results found. Try adjusting your filters.</p>';
+                return;
+            }
+            
+            grid.innerHTML = filtered.map(result => {
+                const classSlug = (result.classification || 'augment').toLowerCase().replace(' ', '-');
+                const confidence = result.confidence || 0.7;
+                
+                return `
+                    <div class="result-card">
+                        <div class="card-header">
+                            <span class="task-id">${result.task_id || 'TASK'}</span>
+                            <span class="classification-badge ${classSlug}">${result.classification || 'Unknown'}</span>
+                        </div>
+                        <h3 class="card-title">${result.task_name || result.title || 'Untitled Task'}</h3>
+                        <p class="card-description">${(result.description || '').substring(0, 150)}...</p>
+                        <div class="card-meta">
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${confidence * 100}%"></div>
+                            </div>
+                            <span class="evidence-count">${result.evidence_count || 0} evidence</span>
+                        </div>
+                        <div class="card-actions">
+                            <button class="card-btn" onclick="viewEvidence('${result.task_id}')">📚 Evidence</button>
+                            <button class="card-btn" onclick="askAboutTask('${result.task_id}')">💬 Ask AI</button>
+                            <button class="card-btn primary" onclick="viewDetails('${result.task_id}')">Details →</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // View evidence for a task
+        async function viewEvidence(taskId) {
+            switchSection('chat');
+            askQuestion(`Show me all evidence for DCWF task ${taskId}`);
+        }
+
+        // Ask about a specific task
+        function askAboutTask(taskId) {
+            switchSection('chat');
+            askQuestion(`Tell me about DCWF task ${taskId} and how AI will impact it`);
+        }
+
+        // View task details
+        function viewDetails(taskId) {
+            switchSection('chat');
+            askQuestion(`Give me a detailed analysis of ${taskId} including work roles, AI tools, and evidence`);
+        }
+
+        // Chat functions
+        function askQuestion(question) {
+            document.getElementById('chatInput').value = question;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            input.value = '';
+            addMessage('user', message);
+            
+            const messagesArea = document.getElementById('messagesArea');
+            const loadingMsg = document.createElement('div');
+            loadingMsg.className = 'message assistant';
+            loadingMsg.id = 'loadingMessage';
+            loadingMsg.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <div class="loading"><div class="spinner"></div> Thinking...</div>
+                </div>
+            `;
+            messagesArea.appendChild(loadingMsg);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, session_id: SESSION_ID })
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById('loadingMessage')?.remove();
+                addMessage('assistant', data.output || data.response || 'No response');
+                
+            } catch (error) {
+                document.getElementById('loadingMessage')?.remove();
+                addMessage('assistant', `Error: ${error.message}. Make sure the API is running.`);
+            }
+        }
+
+        function addMessage(role, content) {
+            const messagesArea = document.getElementById('messagesArea');
+            const msg = document.createElement('div');
+            msg.className = `message ${role}`;
+            msg.innerHTML = `
+                <div class="message-avatar">${role === 'user' ? '👤' : '🤖'}</div>
+                <div class="message-content">${formatMessage(content)}</div>
+            `;
+            messagesArea.appendChild(msg);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+
+        function formatMessage(content) {
+            return content
+                .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // Submit evidence
+        async function submitEvidence() {
+            const url = document.getElementById('submitUrl').value;
+            const title = document.getElementById('submitTitle').value;
+            const content = document.getElementById('submitContent').value;
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!url && !content && !selectedFile) {
+                showToast('Please provide a URL, upload a file, or paste content', 'error');
+                return;
+            }
+
+            const resultDiv = document.getElementById('submitResult');
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div> Analyzing and classifying...</div>';
+            resultDiv.classList.add('show');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Processing...';
+
+            try {
+                let requestBody;
+                let fetchOptions;
+
+                if (selectedFile) {
+                    // Use FormData for file upload - calls /api/upload endpoint
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
+                    if (title) formData.append('title', title);
+                    formData.append('session_id', SESSION_ID);
+
+                    const uploadResponse = await fetch(`${API_BASE}/api/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await uploadResponse.json();
+                    handleSubmitResponse(data, resultDiv, submitBtn);
+                    return;
+                }
+
+                // JSON request for URL/content
+                fetchOptions = {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: url || null,
+                        title: title || null,
+                        content: content || null,
+                        session_id: SESSION_ID
+                    })
+                };
+
+                const response = await fetch(`${API_BASE}/api/submit`, fetchOptions);
+                const data = await response.json();
+
+                if (data.is_duplicate) {
+                    resultDiv.innerHTML = `
+                        <div class="classification-result">
+                            <h3>⚠️ Duplicate Detected</h3>
+                            <p>${data.message}</p>
+                        </div>
+                    `;
+                    showToast('This content was already submitted', 'info');
+                } else if (data.success) {
+                    const c = data.classification || {};
+                    const classIcon = getClassificationIcon(c.classification);
+
+                    resultDiv.innerHTML = `
+                        <div class="classification-result">
+                            <h3>${classIcon} ${c.classification || 'Classified'}</h3>
+
+                            <div class="scores-grid">
+                                <div class="score-item">
+                                    <div class="label">Confidence</div>
+                                    <div class="value">${((c.confidence || 0) * 100).toFixed(0)}%</div>
+                                </div>
+                                <div class="score-item">
+                                    <div class="label">Credibility</div>
+                                    <div class="value">${((c.credibility_score || 0) * 100).toFixed(0)}%</div>
+                                </div>
+                                <div class="score-item">
+                                    <div class="label">Impact</div>
+                                    <div class="value">${((c.impact_score || 0) * 100).toFixed(0)}%</div>
+                                </div>
+                            </div>
+
+                            <p style="margin: 1rem 0; line-height: 1.6;"><strong>Rationale:</strong> ${c.rationale || 'N/A'}</p>
+
+                            ${c.dcwf_tasks && c.dcwf_tasks.length > 0 ? `
+                                <div class="dcwf-tasks-list">
+                                    <strong>🎯 Related DCWF Tasks:</strong>
+                                    ${c.dcwf_tasks.map(task => `
+                                        <div class="dcwf-task-item">
+                                            <span>${typeof task === 'object' ? `${task.task_id}: ${task.task_name || ''}` : task}</span>
+                                            ${typeof task === 'object' && task.relevance_score ?
+                                                `<span style="color: var(--text-secondary)">${(task.relevance_score * 100).toFixed(0)}% relevant</span>` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+
+                            ${c.work_roles && c.work_roles.length > 0 ? `
+                                <p style="margin-top: 1rem;"><strong>👥 Work Roles:</strong> ${c.work_roles.join(', ')}</p>
+                            ` : ''}
+
+                            ${c.key_findings && c.key_findings.length > 0 ? `
+                                <div class="key-findings">
+                                    <strong>💡 Key Findings:</strong>
+                                    <ul>
+                                        ${c.key_findings.map(f => `<li>${f}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+
+                            ${c.ai_tools_mentioned && c.ai_tools_mentioned.length > 0 ? `
+                                <p style="margin-top: 1rem;"><strong>🤖 AI Tools:</strong> ${c.ai_tools_mentioned.join(', ')}</p>
+                            ` : ''}
+
+                            <p style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--text-secondary); font-size: 0.875rem;">
+                                Artifact ID: ${data.artifact_id}<br>
+                                Evidence Strength: ${c.evidence_strength || 'moderate'}
+                            </p>
+                        </div>
+                    `;
+
+                    // Clear form
+                    document.getElementById('submitUrl').value = '';
+                    document.getElementById('submitTitle').value = '';
+                    document.getElementById('submitContent').value = '';
+                    clearFile();
+
+                    showToast('Evidence classified successfully!', 'success');
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="classification-result">
+                            <h3>❌ Error</h3>
+                            <p>${data.message || data.detail || 'Unknown error occurred'}</p>
+                        </div>
+                    `;
+                    showToast('Classification failed', 'error');
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="classification-result">
+                        <h3>❌ Error</h3>
+                        <p>${error.message}</p>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem;">Make sure the API server is running.</p>
+                    </div>
+                `;
+                showToast('Connection error', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🚀 Submit & Classify';
+            }
+        }
+
+        function getClassificationIcon(classification) {
+            const icons = {
+                'Replace': '🔴',
+                'Augment': '🟡',
+                'Remain Human': '🟢',
+                'New Task': '🔵'
+            };
+            return icons[classification] || '⚪';
+        }
+
+        // Handle submit response (used by both URL/content and file upload)
+        function handleSubmitResponse(data, resultDiv, submitBtn) {
+            if (data.is_duplicate) {
+                resultDiv.innerHTML = `
+                    <div class="classification-result">
+                        <h3>⚠️ Duplicate Detected</h3>
+                        <p>${data.message}</p>
+                    </div>
+                `;
+                showToast('This content was already submitted', 'info');
+            } else if (data.success) {
+                const c = data.classification || {};
+                const classIcon = getClassificationIcon(c.classification);
+
+                resultDiv.innerHTML = `
+                    <div class="classification-result">
+                        <h3>${classIcon} ${c.classification || 'Classified'}</h3>
+
+                        <div class="scores-grid">
+                            <div class="score-item">
+                                <div class="label">Confidence</div>
+                                <div class="value">${((c.confidence || 0) * 100).toFixed(0)}%</div>
+                            </div>
+                            <div class="score-item">
+                                <div class="label">Credibility</div>
+                                <div class="value">${((c.credibility_score || 0) * 100).toFixed(0)}%</div>
+                            </div>
+                            <div class="score-item">
+                                <div class="label">Impact</div>
+                                <div class="value">${((c.impact_score || 0) * 100).toFixed(0)}%</div>
+                            </div>
+                        </div>
+
+                        <p style="margin: 1rem 0; line-height: 1.6;"><strong>Rationale:</strong> ${c.rationale || 'N/A'}</p>
+
+                        ${c.dcwf_tasks && c.dcwf_tasks.length > 0 ? `
+                            <div class="dcwf-tasks-list">
+                                <strong>🎯 Related DCWF Tasks:</strong>
+                                ${c.dcwf_tasks.map(task => `
+                                    <div class="dcwf-task-item">
+                                        <span>${typeof task === 'object' ? `${task.task_id}: ${task.task_name || ''}` : task}</span>
+                                        ${typeof task === 'object' && task.relevance_score ?
+                                            `<span style="color: var(--text-secondary)">${(task.relevance_score * 100).toFixed(0)}% relevant</span>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+
+                        ${c.work_roles && c.work_roles.length > 0 ? `
+                            <p style="margin-top: 1rem;"><strong>👥 Work Roles:</strong> ${c.work_roles.join(', ')}</p>
+                        ` : ''}
+
+                        ${c.key_findings && c.key_findings.length > 0 ? `
+                            <div class="key-findings">
+                                <strong>💡 Key Findings:</strong>
+                                <ul>
+                                    ${c.key_findings.map(f => `<li>${f}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        ${c.ai_tools_mentioned && c.ai_tools_mentioned.length > 0 ? `
+                            <p style="margin-top: 1rem;"><strong>🤖 AI Tools:</strong> ${c.ai_tools_mentioned.join(', ')}</p>
+                        ` : ''}
+
+                        <p style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--text-secondary); font-size: 0.875rem;">
+                            Artifact ID: ${data.artifact_id}<br>
+                            Evidence Strength: ${c.evidence_strength || 'moderate'}
+                        </p>
+                    </div>
+                `;
+
+                // Clear form
+                document.getElementById('submitUrl').value = '';
+                document.getElementById('submitTitle').value = '';
+                document.getElementById('submitContent').value = '';
+                clearFile();
+
+                showToast('Evidence classified successfully!', 'success');
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="classification-result">
+                        <h3>❌ Error</h3>
+                        <p>${data.message || data.detail || 'Unknown error occurred'}</p>
+                    </div>
+                `;
+                showToast('Classification failed', 'error');
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = '🚀 Submit & Classify';
+        }
+
+        console.log('🔮 AI Horizon Research Portal loaded');
+        console.log('📡 API:', API_BASE);
+        console.log('🔑 Session:', SESSION_ID);
+    </script>
+</body>
+</html>

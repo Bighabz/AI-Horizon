@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(dir:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(timeout /t 5)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(venvScriptsactivate)",
+      "Bash(uvicorn src.api.main:app:*)",
+      "Bash(\"venv/Scripts/python.exe\" -m uvicorn src.api.main:app --reload --port 8000)",
+      "Bash(\"venv/Scripts/python.exe\":*)",
+      "Bash(\"venv/Scripts/python.exe\" -c:*)",
+      "Bash(timeout /t 3)",
+      "Bash(\"c:/Users/habib/OneDrive/Desktop/Nestler/ai-horizon-python/ai-horizon-python/venv/Scripts/python.exe\" -m uvicorn src.api.main:app --reload --port 8000 --app-dir \"c:/Users/habib/OneDrive/Desktop/Nestler/ai-horizon-python/ai-horizon-python\")",
+      "Bash(\"venv/Scripts/python.exe\" -c \"from pathlib import Path; f = Path\\(''c:/Users/habib/OneDrive/Desktop/Nestler/ai-horizon-python/ai-horizon-python/src/api/main.py''\\); p = f.parent.parent.parent / ''evidence_store.json''; print\\(f''Full path: {p.resolve\\(\\)}''\\)\")",
+      "Bash(cat:*)",
+      "Bash(\"c:/Users/habib/OneDrive/Desktop/Nestler/ai-horizon-python/ai-horizon-python/venv/Scripts/python.exe\" -m py_compile:*)",
+      "Bash(\"c:/Users/habib/OneDrive/Desktop/Nestler/ai-horizon-python/ai-horizon-python/venv/Scripts/python.exe\":*)",
+      "Bash(\"venv/Scripts/python.exe\" -m uvicorn:*)",
+      "Bash(del \"c:\\\\Users\\\\habib\\\\OneDrive\\\\Desktop\\\\Nestler\\\\ai-horizon-python\\\\ai-horizon-python\\\\src\\\\api\\\\__pycache__\\\\main.cpython-311.pyc\")",
+      "Bash(\"venv/Scripts/python.exe\" -B -m uvicorn:*)",
+      "Bash(\"c:/Users/habib/OneDrive/Desktop/Nestler/ai-horizon-python/ai-horizon-python/venv/Scripts/python.exe\" -B -c:*)",
+      "Bash(timeout /t)",
+      "Bash(\"venv/Scripts/python.exe\" -B -m uvicorn src.api.main:app --reload --port 8001)",
+      "Bash(timeout:*)",
+      "Bash(\"venv/Scripts/python.exe\" -B -m uvicorn src.api.main:app --reload --port 8002)",
+      "Bash(venvScriptspython.exe -m uvicorn src.api.main:app --host 0.0.0.0 --port 8003 --reload)",
+      "Bash(venv/Scripts/python.exe -m uvicorn:*)",
+      "Bash(ping:*)",
+      "Bash(npm run dev:*)"
+    ]
+  }
+}

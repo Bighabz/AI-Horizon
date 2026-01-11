@@ -1,0 +1,1676 @@
+{
+  "name": "🚀 AI Horizon DCWF Classification - COMPLETE PIPELINE v2 copy",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# 🚀 DCWF CLASSIFICATION PIPELINE\n\n## ENTRY POINTS:\n✅ Webhook: /webhook/artifact-intake\n✅ Google Drive: AIHORIZON folder\n\n## COMPLETE FLOW:\n1. Content Extraction (URLs/Files)\n2. Normalize Content\n3. **Store Artifact** (Supabase)\n4. Webhook Response\n5. **AI Agent + MCP** (DCWF task matching)\n6. **Conversation Memory** (20 msgs)\n7. **Text Classifier** (Replace/Augment/Remain/New)\n8. **Store Classification** (Supabase)\n9. **Embed + Vectorize** (Google Gemini 768d)\n10. **Vector Store** (RAG-ready)\n\n## STORAGE:\n📊 artifacts table\n📊 classifications table\n📊 document_vectors table (768d)\n📊 conversation_memory table (20 msgs)",
+        "height": 800,
+        "width": 600,
+        "color": 2
+      },
+      "id": "296d7a98-f774-4282-a710-c6c8143ac6da",
+      "name": "Pipeline Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -112,
+        -112
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "file-id",
+              "name": "file_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "file-type",
+              "name": "file_type",
+              "value": "={{ $json.mimeType }}",
+              "type": "string"
+            },
+            {
+              "id": "file-name",
+              "name": "name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5f51b008-eea1-406a-8010-00b67109eb67",
+      "name": "Set File Metadata",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        1200
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.file_type }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.file_type }}",
+                    "rightValue": "application/vnd.google-apps.document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "GoogleDoc"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.file_type }}",
+                    "rightValue": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "Excel"
+            },
+            {
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.file_type }}",
+                    "rightValue": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "DOCX"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "41dd598c-d3c2-44a7-8018-070af9320d20",
+      "name": "File Type Router",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        1152,
+        1168
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.file_id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "text/plain"
+            }
+          }
+        }
+      },
+      "id": "e1be687a-2abf-46f8-ad35-a0df98f3174f",
+      "name": "Download Google Doc",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1376,
+        912
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1tsjQyuOX7ebbIo3",
+          "name": "habibj97@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.file_id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "7ebf0b84-4c31-460f-82af-82bd9c3b21f0",
+      "name": "Download PDF",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1376,
+        1104
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1tsjQyuOX7ebbIo3",
+          "name": "habibj97@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.file_id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "173e9f07-a338-4724-a74b-0650b0d11807",
+      "name": "Download Excel",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1376,
+        1296
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1tsjQyuOX7ebbIo3",
+          "name": "habibj97@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.file_id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "e5f74ada-b3c2-462e-a357-1f6e4d447a2a",
+      "name": "Download DOCX",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1376,
+        1488
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1tsjQyuOX7ebbIo3",
+          "name": "habibj97@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "id": "0877b64c-306d-42b0-ae86-0af7937bf579",
+      "name": "Extract Google Doc",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        912
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "664f3ea5-ad91-459d-b644-058231cd23c6",
+      "name": "Extract PDF",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        1104
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "id": "4f929c4c-47a3-485d-989b-39311c61a9b9",
+      "name": "Extract Excel",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        1296
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "docx"
+      },
+      "id": "a61e4603-eb74-479f-8323-85d1234beb5c",
+      "name": "Extract DOCX",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const sources = [\n  {node: 'Get YouTube Transcript', type: 'youtube', field: 'transcript'},\n  {node: 'Get TikTok Transcript', type: 'tiktok', field: 'transcript'},\n  {node: 'Scrape URL', type: 'article', field: 'text'},\n  {node: 'Extract Google Doc', type: 'google_doc', field: 'data'},\n  {node: 'Extract PDF', type: 'pdf', field: 'data'},\n  {node: 'Extract Excel', type: 'excel', field: 'data'},\n  {node: 'Extract DOCX', type: 'docx', field: 'data'}\n];\n\nlet content = '';\nlet sourceType = 'unknown';\nlet fileName = 'Untitled';\nlet sourceUrl = '';\n\n// Try to get URL from multiple possible sources\nfunction extractUrl() {\n  try {\n    // Check webhook body\n    const webhook = $('Webhook: Artifact Intake').first();\n    if (webhook?.json?.body?.url) return webhook.json.body.url;\n    if (webhook?.json?.body?.message) return webhook.json.body.message;\n    if (webhook?.json?.chatInput) return webhook.json.chatInput;\n  } catch(e) {}\n  \n  try {\n    // Check chat trigger\n    const chatTrigger = $('When chat message received').first();\n    if (chatTrigger?.json?.chatInput) return chatTrigger.json.chatInput;\n  } catch(e) {}\n  \n  return '';\n}\n\nfor (const source of sources) {\n  try {\n    const nodeData = $(source.node).item;\n    if (!nodeData?.json) continue;\n    \n    const data = nodeData.json;\n    \n    // Handle Dumpling community node responses\n    let extractedContent = data[source.field];\n    \n    // Fallback: check common Dumpling response fields\n    if (!extractedContent) {\n      extractedContent = data.text || data.content || data.results || data.transcript;\n    }\n    \n    if (extractedContent) {\n      content = String(extractedContent);\n      sourceType = source.type;\n      \n      // For URL-based content (YouTube, TikTok, Articles)\n      if (['youtube', 'tiktok', 'article'].includes(source.type)) {\n        sourceUrl = extractUrl();\n        \n        // Try to extract title from Dumpling response\n        if (data.title) {\n          fileName = data.title;\n        } else {\n          const typeNames = {\n            'youtube': 'YouTube Video',\n            'tiktok': 'TikTok Video',\n            'article': 'Article'\n          };\n          fileName = typeNames[source.type] || 'Content';\n        }\n      } \n      // For file-based content (Google Drive)\n      else {\n        try {\n          const metadata = $('Set File Metadata').item.json;\n          fileName = metadata.name || 'Untitled';\n          sourceUrl = `https://drive.google.com/file/d/${metadata.file_id}/view`;\n        } catch(e) {\n          fileName = 'Document';\n        }\n      }\n      \n      break;\n    }\n  } catch(e) {\n    // Continue to next source\n  }\n}\n\ncontent = content.trim();\n\n// Fallback if no content found\nif (!content) {\n  content = 'No content extracted';\n  sourceType = 'error';\n}\n\nreturn {\n  json: {\n    content: content,\n    source_type: sourceType,\n    title: fileName,\n    source_url: sourceUrl,\n    ingested_at: new Date().toISOString()\n  }\n};"
+      },
+      "id": "b3c8e77a-5910-41ab-93b1-41ce05b3f80f",
+      "name": "Normalize All Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        1008
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "artifacts",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "content",
+              "fieldValue": "={{ $json.content }}"
+            },
+            {
+              "fieldId": "source_type",
+              "fieldValue": "={{ $json.source_type }}"
+            },
+            {
+              "fieldId": "title",
+              "fieldValue": "={{ $json.title }}"
+            },
+            {
+              "fieldId": "source_url",
+              "fieldValue": "={{ $json.source_url }}"
+            },
+            {
+              "fieldId": "updated_at",
+              "fieldValue": "={{ $json.ingested_at }}"
+            },
+            {
+              "fieldId": "user_id",
+              "fieldValue": "1"
+            }
+          ]
+        }
+      },
+      "id": "df41cc1c-bd6e-431c-add9-d80d6ca56838",
+      "name": "Store Artifact",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2048,
+        1008
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "Ap8IxxoipD3sb9Lo",
+          "name": "Ai Horizon"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"success\": true, \"artifact_id\": $json.artifact_id, \"status\": \"processing\"} }}",
+        "options": {}
+      },
+      "id": "d1457084-cbee-4b0a-a32c-a4f7447b7f6f",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Get YouTube Transcript').item.json.transcript }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a DCWF (Digital Cybersecurity Workforce Framework) task identification expert.\n\nYour mission:\n1. Read the artifact describing a cybersecurity activity, tool, or capability\n2. Use the MCP tool \"Socials Knowledge Base\" to search the 1,350 DCWF tasks\n3. Identify the top 3-5 most relevant DCWF tasks that match the artifact\n4. Provide detailed analysis with confidence scores\n\nSearch Strategy:\n- Extract key AI/cybersecurity concepts from the artifact\n- Search for tasks related to those concepts\n- Consider both exact task matches and related capabilities\n- Look for work role, category, and specialty area alignment\n\nYou MUST respond with ONLY valid JSON in this exact format:\n{\n  \"primary_task\": {\n    \"task_id\": \"T0028\",\n    \"nist_task_id\": \"T0028\",\n    \"title\": \"Conduct vulnerability scans\",\n    \"confidence\": 0.92,\n    \"reasoning\": \"The artifact describes automated vulnerability scanning, which directly maps to DCWF task T0028.\"\n  },\n  \"related_tasks\": [\n    {\n      \"task_id\": \"T0010\",\n      \"confidence\": 0.75,\n      \"reasoning\": \"Also relates to collecting and analyzing data.\"\n    }\n  ],\n  \"key_concepts\": [\"vulnerability scanning\", \"automation\", \"threat detection\"],\n  \"work_roles\": [\"Cybersecurity Analyst\", \"Vulnerability Assessment Analyst\"]\n}\n\nReturn ONLY valid JSON. No markdown, no explanations outside the JSON structure.",
+          "maxIterations": 25
+        }
+      },
+      "id": "abf33135-ebf0-400b-acae-12087024d0dc",
+      "name": "DCWF Classification Agent with MCP",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        2336,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://hjworkflows.com/webhook/socials-kb",
+        "serverTransport": "httpStreamable",
+        "options": {}
+      },
+      "id": "43a4fe15-a22d-4030-bb8c-2eb966fcb2e2",
+      "name": "DCWF MCP Client",
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        2400,
+        1376
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5",
+          "mode": "list",
+          "cachedResultName": "gpt-5"
+        },
+        "options": {
+          "temperature": 1
+        }
+      },
+      "id": "991ec4f3-20e7-4bd8-a8bc-60c6f5f31d37",
+      "name": "GPT-4.1 Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2272,
+        1376
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "wNjyyfGZ1qYpPgbG",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"primary_task\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"task_id\": {\"type\": \"string\"},\n        \"nist_task_id\": {\"type\": \"string\"},\n        \"title\": {\"type\": \"string\"},\n        \"confidence\": {\"type\": \"number\"},\n        \"reasoning\": {\"type\": \"string\"}\n      }\n    },\n    \"related_tasks\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"task_id\": {\"type\": \"string\"},\n          \"confidence\": {\"type\": \"number\"},\n          \"reasoning\": {\"type\": \"string\"}\n        }\n      }\n    },\n    \"key_concepts\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"}\n    },\n    \"work_roles\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"}\n    }\n  }\n}"
+      },
+      "id": "92ec7e1c-eff4-4c46-9585-38e360b29205",
+      "name": "Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2528,
+        1376
+      ]
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.output.primary_task }}{{ $json.output.primary_task.title }}{{ $json.output.primary_task.confidence }}{{ $json.output.primary_task.reasoning }}{{ $json.output.key_concepts }}{{ $json.output.work_roles }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Replace",
+              "description": "AI can fully replace human performance of this DCWF task with minimal oversight.\n\nCharacteristics:\n- Highly repetitive, rule-based tasks\n- Clear success criteria that can be automatically validated\n- Low risk if errors occur, or errors are easily caught\n- High volume tasks that benefit from 24/7 automation\n- Minimal need for human judgment or ethical considerations\n\nExamples:\n- Automated vulnerability scanning (DCWF T0028)\n- Log aggregation and parsing\n- Signature-based malware detection\n- Automated patch management for known vulnerabilities\n- Network traffic monitoring with predefined rules\n\nWhen AI can handle 80%+ of task execution with <5% error rate requiring human intervention."
+            },
+            {
+              "category": "Augment",
+              "description": "AI significantly enhances human capability but humans remain essential for oversight, judgment, and final decisions.\n\nCharacteristics:\n- Complex tasks requiring both automation and human expertise\n- AI handles data processing, humans handle interpretation\n- Scenarios requiring contextual understanding or ethical judgment\n- Tasks where AI provides recommendations but humans decide\n- Medium-risk situations where errors need human review\n\nExamples:\n- Threat intelligence analysis with AI-assisted correlation (DCWF T0597)\n- Security incident triage with AI prioritization, human investigation\n- Code review with AI vulnerability detection, human verification\n- Phishing detection with AI flagging, human validation\n- Risk assessment with AI data analysis, human risk acceptance\n\nWhen AI handles 40-70% of cognitive load but critical decisions remain human-led."
+            },
+            {
+              "category": "Remain Human",
+              "description": "This DCWF task must remain primarily human-performed due to safety, ethics, legal, or judgment requirements.\n\nCharacteristics:\n- High-stakes decisions with significant consequences\n- Requires human accountability and legal liability\n- Involves ethical dilemmas or gray areas\n- Needs contextual wisdom, empathy, or stakeholder management\n- Regulatory or compliance requirements mandate human oversight\n\nExamples:\n- Security policy development and governance (DCWF T0004)\n- Incident command and crisis leadership\n- Breach notification and stakeholder communication\n- Access control policy exceptions and risk acceptance\n- Security architecture decisions with business impact\n- Legal testimony and forensic analysis presentation\n\nWhen human judgment, accountability, and contextual wisdom are irreplaceable, even with AI assistance."
+            },
+            {
+              "category": "New Task",
+              "description": "AI enables entirely new cybersecurity capabilities that did not exist in the traditional DCWF framework.\n\nCharacteristics:\n- Capabilities made possible only through AI/ML technology\n- Tasks that leverage AI as the primary tool, not just assistance\n- New threat detection or response capabilities\n- Novel approaches to existing problems that fundamentally change the workflow\n- Creates new work roles or specialties\n\nExamples:\n- AI-powered adversarial attack simulation and red teaming\n- Behavioral anomaly detection using unsupervised learning\n- Automated threat hunting with AI pattern recognition\n- AI-generated security documentation and playbooks\n- Predictive security analytics forecasting future threats\n- AI-driven security orchestration across complex environments\n- Deep fake detection and synthetic media analysis\n\nWhen the task represents a fundamentally new capability enabled by AI, not just automation of existing work."
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "You are an AI impact assessment expert specializing in cybersecurity workforce transformation.\n\nContext: You have already identified which DCWF task(s) this artifact relates to from the AI Agent. Now determine how AI impacts the human workforce for this specific task.\n\nYour job: Classify the artifact into ONE category that best describes AI's relationship to the identified DCWF task.\n\nCategories:\n1. REPLACE: AI can fully automate this task (80%+ autonomous, <5% human intervention)\n2. AUGMENT: AI assists humans significantly (40-70% AI, critical decisions stay human)\n3. REMAIN HUMAN: Must stay human-led (ethics, judgment, accountability required)\n4. NEW TASK: AI enables entirely new capability not in traditional DCWF\n\nConsider:\n- The specific DCWF task already identified by the AI Agent\n- Technical feasibility and maturity of AI for this task\n- Risk level and consequences of errors\n- Regulatory, ethical, and legal constraints\n- Current industry adoption and proven use cases\n\nChoose the single best fit category."
+        }
+      },
+      "id": "cedbb2ef-b3a8-4e2c-b486-169860e19604",
+      "name": "Text Classifier",
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        2736,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list"
+        },
+        "options": {
+          "temperature": 0
+        }
+      },
+      "id": "5b8696a6-c931-4154-97f7-9fb7e7ae423d",
+      "name": "Classifier GPT Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2816,
+        1440
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "wNjyyfGZ1qYpPgbG",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const artifact = $('Store Artifact').item.json;\nconst agentResult = $('DCWF Classification Agent with MCP').item.json;\nconst classifierResult = $('Text Classifier').item.json;\n\n// ACCESS THE .output FIELD FIRST!\nconst agentData = agentResult.output || agentResult;\nconst classifierData = classifierResult.output || classifierResult;\n\n// Extract primary task\nconst primaryTask = agentData.primary_task || {};\nconst relatedTasks = agentData.related_tasks || [];\n\n// Build dcwf_tasks array - primary task first, then related\nconst dcwfTasks = [];\nif (primaryTask.task_id) {\n  dcwfTasks.push(primaryTask.task_id);\n}\nrelatedTasks.forEach(task => {\n  if (task.task_id) {\n    dcwfTasks.push(task.task_id);\n  }\n});\n\n// Get classification (it should be a string like \"Augment\")\nconst classification = classifierData || 'Unknown';\n\n// Get artifact_id from Store Artifact\nconst artifactId = artifact.artifact_id || artifact.id;\n\nreturn {\n  json: {\n    artifact_id: artifactId,\n    classification: classification,\n    confidence: primaryTask.confidence || 0.5,\n    rationale: primaryTask.reasoning || '',\n    dcwf_tasks: dcwfTasks,\n    primary_task_id: primaryTask.task_id || '',\n    nist_task_id: primaryTask.nist_task_id || '',\n    task_title: primaryTask.title || '',\n    key_concepts: agentData.key_concepts || [],\n    work_roles: agentData.work_roles || [],\n    source_url: artifact.source_url || '',\n    source_type: artifact.source_type || '',\n    title: artifact.title || '',\n    classified_at: new Date().toISOString()\n  }\n};"
+      },
+      "id": "6992e546-9b89-4eaa-85a7-b6d9b7393b46",
+      "name": "Merge Classification Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3168,
+        1168
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "classifications"
+      },
+      "id": "34bc193d-d31b-4123-a73f-0aab647face1",
+      "name": "Store Classification",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3344,
+        1152
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Ap8IxxoipD3sb9Lo",
+          "name": "Ai Horizon"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get artifact from earlier in the flow\nconst artifact = $('Store Artifact').item.json;\n\n// Get classification data from BEFORE it was stored in database\nconst classification = $('Merge Classification Results').item.json;\n\n// Now we have everything we need!\nreturn {\n  json: {\n    content: artifact.content,\n    artifact_id: classification.artifact_id,\n    classification: classification.classification,\n    confidence: classification.confidence,\n    dcwf_tasks: classification.dcwf_tasks,\n    primary_task_id: classification.primary_task_id,\n    nist_task_id: classification.nist_task_id,\n    task_title: classification.task_title,\n    file_name: artifact.title,\n    source_url: classification.source_url,\n    source_type: classification.source_type,\n    rationale: classification.rationale,\n    key_concepts: classification.key_concepts,\n    work_roles: classification.work_roles,\n    classified_at: classification.classified_at\n  }\n};"
+      },
+      "id": "af5c75ac-42f7-4512-b041-16054e53623a",
+      "name": "Prepare for Vectorization",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3536,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.content }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "artifact_id",
+                "value": "={{ $json.artifact_id }}"
+              },
+              {
+                "name": "classification",
+                "value": "={{ $json.classification }}"
+              },
+              {
+                "name": "confidence",
+                "value": "={{ $json.confidence }}"
+              },
+              {
+                "name": "primary_task_id",
+                "value": "={{ $json.primary_task_id }}"
+              },
+              {
+                "name": "dcwf_tasks",
+                "value": "={{ JSON.stringify($json.dcwf_tasks) }}"
+              },
+              {
+                "name": "file_name",
+                "value": "={{ $json.file_name }}"
+              },
+              {
+                "name": "source_url",
+                "value": "={{ $json.source_url }}"
+              },
+              {
+                "name": "source_type",
+                "value": "={{ $json.source_type }}"
+              },
+              {
+                "name": "domain",
+                "value": "cybersecurity"
+              },
+              {
+                "name": "purpose",
+                "value": "dcwf_classification"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f2c4d0bd-a27c-4187-a6dd-423b8a4def14",
+      "name": "Document Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        3888,
+        1376
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "document_vectors",
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "id": "b2bbab9e-d7c9-497d-9044-1de17e0bc4a6",
+      "name": "Store in Vector DB",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        3792,
+        1152
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Ap8IxxoipD3sb9Lo",
+          "name": "Ai Horizon"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "94f8e40a-d34e-4826-b021-74f23c1d1d78",
+      "name": "Embeddings Google Gemini",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3760,
+        1376
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "CUswDy6KfontJVa4",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chunkSize": 500,
+        "chunkOverlap": 50,
+        "options": {}
+      },
+      "id": "2e474389-0f51-4cd5-9f60-a18a9f1b303e",
+      "name": "Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        3968,
+        1584
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "819c11f1-a20e-4299-ab05-88f774221337",
+                    "leftValue": "={{ $json.body.message }} OR {{ $json.chatInput }}",
+                    "rightValue": "youtube.com",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Youtube"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "df263246-9a98-4776-8a16-abb9e97ee07b",
+                    "leftValue": "={{ $json.body.message }} OR {{ $json.chatInput }}",
+                    "rightValue": "tiktok.com",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "tiktok"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ce53d1e4-955e-4185-a97c-0d66fcbe107c",
+                    "leftValue": "={{ $json.body.message }} OR {{ $json.chatInput }}",
+                    "rightValue": ".com",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "article"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a401dcb7-b6b1-4d39-be08-20b875271307",
+                    "leftValue": "={{ $json.body.message }} OR {{ $json.chatInput }}",
+                    "rightValue": ".docx",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": ".docx"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ec1493bd-a23c-4e87-8f95-ea5d23c9f5de",
+                    "leftValue": "={{ $json.body.message }} OR {{ $json.chatInput }}",
+                    "rightValue": ".doc",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": ".doc"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1bdab27d-4cad-4de8-b18c-4789303ff4e9",
+                    "leftValue": "={{ $json.body.message }} OR {{ $json.chatInput }}",
+                    "rightValue": ".pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pdf"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "a09ba2d8-2def-4c8b-b798-0ef39615a1ce",
+                    "leftValue": "={{ $json.body.message }} OR {{ $json.chatInput }}",
+                    "rightValue": ".xlsx",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "xlsx"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "dae822ef-029e-42fd-a762-b72ccef25a71",
+                    "leftValue": "={{ $json.body.message }} OR {{ $json.chatInput }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "chat"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        144,
+        512
+      ],
+      "id": "03b290ca-9fe1-4178-a07c-a9bea39e30cd",
+      "name": "Initial Request Router"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are an AI assistant for the AI Horizon DCWF Classification System.\n\n**Capabilities:**\n1. 💬 Chat about cybersecurity & AI workforce transformation\n2. 🔗 Process URLs (YouTube, TikTok, articles)  \n3. 📄 Analyze documents (PDF, DOCX, Excel, Google Docs)\n\n**When users want to upload documents:**\n\n\"I can analyze your document! Choose an option:\n\n**📤 Option 1: Upload Directly (Fast)**\nSend your file in this format:\n```json\n{\n  \"file\": \"<base64_encoded_content>\",\n  \"fileName\": \"document.pdf\",\n  \"mimeType\": \"application/pdf\"\n}\n```\n\n**📁 Option 2: Google Drive (Auto-monitored)**\nUpload here: https://drive.google.com/drive/folders/1Sx7ZoVnLxANQSY0VLbkhUckMGfMqlcvy\nI'll process it automatically within 1 minute!\"\n\n**URL Processing:**\nIf you mention a URL, I can guide you to submit it for DCWF classification.\n\n**My Expertise:**\n- DCWF task framework\n- AI augmentation vs replacement analysis\n- Cybersecurity workforce transformation\n- Classification: Replace/Augment/Remain/New tasks\n\nBe educational, friendly, and guide users effectively!",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        288
+      ],
+      "id": "b84a9a44-066c-4c15-b75e-a3bcb1524144",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        608
+      ],
+      "id": "f775a7b6-7933-400d-bdf9-9199d9a88a3d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "wNjyyfGZ1qYpPgbG",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        928,
+        288
+      ],
+      "id": "9dfdee72-bbd6-4ae2-b3d3-68d4ecdd9bdb",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "resource": "webScraping",
+        "url": "={{ $json.body.url }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-dumplingai.dumplingAi",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        528
+      ],
+      "id": "ac67fc8e-a9a2-44f6-b7a4-999dc30f5f8a",
+      "name": "Scrape URL",
+      "credentials": {
+        "dumplingAiApi": {
+          "id": "RzpstEIIs3YQsN6D",
+          "name": "Dumpling AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "videoUrl": "={{ $json.chatInput }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-dumplingai.dumplingAi",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        304
+      ],
+      "id": "87094050-6378-440c-893f-b935d87e333b",
+      "name": "Get YouTube Transcript",
+      "credentials": {
+        "dumplingAiApi": {
+          "id": "RzpstEIIs3YQsN6D",
+          "name": "Dumpling AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getTikTokTranscript",
+        "videoUrl": "={{ $json.body.url }}",
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-dumplingai.dumplingAi",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        720
+      ],
+      "id": "a751e637-f4d1-4493-9dde-5d8aa9e3a915",
+      "name": "Get TikTok Transcript",
+      "credentials": {
+        "dumplingAiApi": {
+          "id": "RzpstEIIs3YQsN6D",
+          "name": "Dumpling AI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1Sx7ZoVnLxANQSY0VLbkhUckMGfMqlcvy",
+          "mode": "list",
+          "cachedResultName": "AIHORIZON",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1Sx7ZoVnLxANQSY0VLbkhUckMGfMqlcvy"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        640,
+        1200
+      ],
+      "id": "87403d06-27b9-4bc5-bed0-86f85df70a6d",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1tsjQyuOX7ebbIo3",
+          "name": "habibj97@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const fileData = $json.body.file;\nconst fileName = $json.body.fileName || 'uploaded_file';\nconst mimeType = $json.body.mimeType || 'application/octet-stream';\n\nreturn {\n  json: {\n    fileName: fileName,\n    mimeType: mimeType,\n    uploadSource: 'webhook'\n  },\n  binary: {\n    data: {\n      data: fileData,\n      mimeType: mimeType,\n      fileName: fileName\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        1024
+      ],
+      "id": "e797bb75-f900-453b-8568-c34f777fc912",
+      "name": "File Upload"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Document Uploaded!",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        4144,
+        1152
+      ],
+      "id": "833183cb-3150-46be-9f3b-0aa81098803d",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1Sx7ZoVnLxANQSY0VLbkhUckMGfMqlcvy",
+          "mode": "list",
+          "cachedResultName": "AIHORIZON",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1Sx7ZoVnLxANQSY0VLbkhUckMGfMqlcvy"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        1280
+      ],
+      "id": "fc89737b-5612-46f5-b861-4235dc8ba53c",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "1tsjQyuOX7ebbIo3",
+          "name": "habibj97@gmail.com"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -64,
+        816
+      ],
+      "id": "e019dcad-6371-4f16-87cd-4a3c2e8fd631",
+      "name": "When chat message received",
+      "webhookId": "d9724293-ace2-4145-965d-35169d78fec7"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=={{ $json.sessionId || $json.body.sessionId || $json.headers['x-session-id'] || 'default' }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        608
+      ],
+      "id": "c08b5a1e-7a32-4ce8-b496-5fed43345365",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "artifact-intake",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "http://aihorizonproject.com"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, GET, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "16cdbe97-12fe-4d02-93e9-1cc5a5959940",
+      "name": "Webhook: Artifact Intake",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -384,
+        1072
+      ],
+      "webhookId": "artifact-intake-webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Set File Metadata": {
+      "main": [
+        [
+          {
+            "node": "File Type Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Type Router": {
+      "main": [
+        [
+          {
+            "node": "Download PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download Google Doc",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download Excel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download DOCX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Google Doc": {
+      "main": [
+        [
+          {
+            "node": "Extract Google Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Excel": {
+      "main": [
+        [
+          {
+            "node": "Extract Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download DOCX": {
+      "main": [
+        [
+          {
+            "node": "Extract DOCX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Google Doc": {
+      "main": [
+        [
+          {
+            "node": "Normalize All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF": {
+      "main": [
+        [
+          {
+            "node": "Normalize All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Excel": {
+      "main": [
+        [
+          {
+            "node": "Normalize All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract DOCX": {
+      "main": [
+        [
+          {
+            "node": "Normalize All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize All Content": {
+      "main": [
+        [
+          {
+            "node": "Store Artifact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Artifact": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "DCWF Classification Agent with MCP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DCWF Classification Agent with MCP": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DCWF MCP Client": {
+      "ai_tool": [
+        [
+          {
+            "node": "DCWF Classification Agent with MCP",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4.1 Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "DCWF Classification Agent with MCP",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "DCWF Classification Agent with MCP",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Merge Classification Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Classification Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Classification Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge Classification Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classifier GPT Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Classification Results": {
+      "main": [
+        [
+          {
+            "node": "Store Classification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Classification": {
+      "main": [
+        [
+          {
+            "node": "Prepare for Vectorization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Document Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Store in Vector DB",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Store in Vector DB",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Document Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare for Vectorization": {
+      "main": [
+        [
+          {
+            "node": "Store in Vector DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initial Request Router": {
+      "main": [
+        [
+          {
+            "node": "Get YouTube Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get TikTok Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Scrape URL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "File Type Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "File Type Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "File Type Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "File Type Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape URL": {
+      "main": [
+        [
+          {
+            "node": "Normalize All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get TikTok Transcript": {
+      "main": [
+        [
+          {
+            "node": "Normalize All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get YouTube Transcript": {
+      "main": [
+        [
+          {
+            "node": "Normalize All Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Set File Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "File Upload": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store in Vector DB": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Initial Request Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Artifact Intake": {
+      "main": [
+        [
+          {
+            "node": "Initial Request Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "61c83871-c0dd-4215-bc19-982e94418b60",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9bc4d89e68fd249574a61670a5f9e1704f35eb535a42cfc80511db28683459c9"
+  },
+  "id": "n8PMur9LiF7ZJKYQ",
+  "tags": []
+}

@@ -1,0 +1,293 @@
+[
+  {
+    "artifact_id": "artifact_5d1747aab364",
+    "title": "Test Article on AI Security",
+    "content": "This is a test article about how AI is being used in cybersecurity for threat detection. Security analysts are using machine learning to automate log analysis and identify potential threats more quickly.",
+    "source_url": null,
+    "source_type": "article",
+    "resource_type": "Article",
+    "difficulty": "Beginner",
+    "is_free": true,
+    "work_role": "Cyber Defense Analyst",
+    "classification": "Augment",
+    "confidence": 0.9,
+    "rationale": "The artifact describes AI assisting security analysts in automating log analysis and accelerating threat identification, indicating that AI is augmenting human capabilities rather than fully replacing them in threat detection tasks. Human analysts are still leveraging the AI tools to perform their duties more efficiently.",
+    "dcwf_tasks": [
+      {
+        "task_id": "T-AN-001",
+        "task_name": "Perform Event Log Analysis",
+        "relevance_score": 0.95,
+        "impact_description": "AI and machine learning automate initial log parsing, correlation, and anomaly detection, significantly reducing the manual effort required for event log analysis and speeding up the identification of potential threats for human review."
+      },
+      {
+        "task_id": "T-AN-002",
+        "task_name": "Identify and Analyze Threats",
+        "relevance_score": 0.9,
+        "impact_description": "AI algorithms enhance the ability to quickly identify and prioritize potential threats by sifting through vast amounts of data, flagging suspicious patterns, and providing enriched context for further human investigation by security analysts."
+      }
+    ],
+    "work_roles": [
+      "Cyber Defense Analyst",
+      "Security Operations Center (SOC) Analyst"
+    ],
+    "key_findings": [
+      "AI is being used in cybersecurity for threat detection.",
+      "Security analysts are using machine learning to automate log analysis.",
+      "AI helps identify potential threats more quickly."
+    ],
+    "ai_tools_mentioned": [],
+    "stored_at": "2026-01-07T04:37:48.686917"
+  },
+  {
+    "artifact_id": "artifact_6ebaeb8c0bec",
+    "title": "Untitled",
+    "content": "https://www.goldmansachs.com/insights/articles/how-will-ai-affect-the-global-workforce",
+    "source_url": null,
+    "source_type": "web",
+    "resource_type": "Article",
+    "difficulty": "Beginner",
+    "is_free": true,
+    "work_role": "Cyber Defense Analyst",
+    "classification": "Augment",
+    "confidence": 0.85,
+    "rationale": "The artifact, a general analysis from a reputable financial institution, suggests AI will broadly augment human capabilities across various sectors, including areas relevant to cybersecurity. While some tasks may be fully automated or new ones created, the predominant theme for complex analytical and decision-making roles in cybersecurity will be AI assisting humans rather than fully replacing them.",
+    "dcwf_tasks": [
+      {
+        "task_id": "THT-ANA-001",
+        "task_name": "Analyze threat intelligence and make recommendations",
+        "relevance_score": 0.8,
+        "impact_description": "AI can significantly augment this task by rapidly processing vast amounts of threat data, identifying patterns, correlating disparate indicators, and generating initial threat reports, allowing human analysts to focus on higher-level strategic analysis and decision-making."
+      },
+      {
+        "task_id": "SRM-MNT-001",
+        "task_name": "Monitor security systems for anomalies and incidents",
+        "relevance_score": 0.9,
+        "impact_description": "AI will heavily augment this task by automating the detection of anomalies, flagging suspicious activities in real-time across large datasets (logs, network traffic), and reducing alert fatigue. Human intervention remains crucial for validating complex incidents and making containment decisions."
+      },
+      {
+        "task_id": "VAM-VUL-001",
+        "task_name": "Identify and classify vulnerabilities in systems and applications",
+        "relevance_score": 0.7,
+        "impact_description": "AI can improve the efficiency of vulnerability scanning and initial classification, potentially identifying new classes of vulnerabilities or misconfigurations. However, human expertise is essential for contextualizing vulnerabilities, assessing actual risk, and developing effective remediation strategies."
+      }
+    ],
+    "work_roles": [
+      "Cyber Defense Analyst",
+      "Threat Intelligence Analyst",
+      "Security Architect",
+      "Vulnerability Management Analyst"
+    ],
+    "key_findings": [
+      "AI is expected to significantly increase worker productivity across many sectors.",
+      "While AI may displace some routine tasks, it will also create new jobs and transform existing ones.",
+      "The adoption of AI will necessitate a shift in skills, with increased demand for soft skills and AI-specific proficiencies."
+    ],
+    "ai_tools_mentioned": [
+      "ChatGPT",
+      "Generative AI",
+      "Machine Learning"
+    ],
+    "stored_at": "2026-01-07T04:52:35.681806"
+  },
+  {
+    "artifact_id": "artifact_0567ddf8b02e",
+    "title": "Untitled",
+    "content": "https://onlinedegrees.uwf.edu/articles/cybersecurity-and-ai/",
+    "source_url": null,
+    "source_type": "web",
+    "resource_type": "Article",
+    "difficulty": "Beginner",
+    "is_free": true,
+    "work_role": "Cyber Defense Analyst",
+    "classification": "Augment",
+    "confidence": 0.9,
+    "rationale": "The artifact consistently emphasizes that AI will enhance human capabilities by automating routine tasks, improving analysis, and speeding up response times across various cybersecurity domains. It highlights AI as a powerful tool that assists cybersecurity professionals, allowing them to focus on more complex and strategic challenges rather than replacing them outright.",
+    "dcwf_tasks": [
+      {
+        "task_id": "AN-T2.1.M",
+        "task_name": "Collect and analyze threat intelligence information.",
+        "relevance_score": 0.85,
+        "impact_description": "AI systems can automate the collection, aggregation, and initial analysis of vast amounts of threat intelligence data from diverse sources, identifying patterns and anomalies far quicker than humans, thereby significantly augmenting human analysts' capabilities."
+      },
+      {
+        "task_id": "CS-T1.2.M",
+        "task_name": "Perform event log correlation and analysis.",
+        "relevance_score": 0.9,
+        "impact_description": "AI and machine learning algorithms can rapidly correlate and analyze massive volumes of event logs from various security tools and systems, identifying suspicious activities and potential threats with greater speed and accuracy, drastically reducing the manual workload for human security analysts."
+      },
+      {
+        "task_id": "AN-T2.3.M",
+        "task_name": "Perform vulnerability assessment.",
+        "relevance_score": 0.8,
+        "impact_description": "AI can assist in automating vulnerability scanning, static/dynamic code analysis, and predicting potential weaknesses and exploitable flaws in systems and applications, providing more comprehensive and faster assessments for human experts to validate and prioritize remediation efforts."
+      }
+    ],
+    "work_roles": [
+      "Cyber Defense Analyst",
+      "Security Architect",
+      "Incident Responder"
+    ],
+    "key_findings": [
+      "AI will significantly augment cybersecurity tasks by automating mundane processes, enhancing threat detection capabilities, and improving the efficiency of incident response and vulnerability management.",
+      "While AI offers powerful defensive tools and opportunities for efficiency, it also enables more sophisticated and automated offensive cyber attacks, creating a new, evolving threat landscape.",
+      "Human expertise remains critically important for strategic decision-making, ethical oversight, interpreting complex AI outputs, and addressing novel and nuanced cyber threats that AI alone cannot fully resolve."
+    ],
+    "ai_tools_mentioned": [],
+    "stored_at": "2026-01-07T23:18:50.146600"
+  },
+  {
+    "artifact_id": "artifact_1bf075cc1c9e",
+    "title": "Web Article: https://fortune.com/2025/08/08/ai-layoffs-jobs-market-shrinks-entry-level/",
+    "content": "- AI is becoming a major driver of workforce reductions, with over 10,000 job cuts in the U.S. in 2025 directly linked to automation, according to new data. Entry-level roles are being hit hardest, as companies look to automate tasks traditionally handled by junior staff. At the same time, the broader job market is slowing, with rising unemployment among recent graduates and young tech workers.\nNo more new hires if AI can do the job.\nThat\u2019s what Shopify CEO Tobi L\u00fctke told staff in a memo earlier this year. And he\u2019s not alone.\nOver at consulting giant McKinsey, thousands of AI agents have been deployed throughout the company, often picking up tasks previously handled by junior workers. At \u201cAI-first\u201d Duolingo, CEO Luis von Ahn is using \u201cAI fluency\u201d to determine who is hired and promoted at the company.\nAcross the rest of the Fortune 500, companies are well and truly leaning into their AI efficiency era, and for many, that means more cuts and less hiring.\nIt\u2019s perhaps no surprise that some recent data has pointed to AI becoming one of the top drivers of workforce reductions.\nIn the U.S., in the first seven months of 2025 alone, generative AI adoption was directly linked to over 10,000 job cuts, according to new data from outplacement firm Challenger, Gray & Christmas. The firm now ranks AI among the top five causes of workforce reductions this year.\nLayoffs are on the rise\nLayoffs are surging in the U.S., with companies announcing more than 806,000 job cuts so far in 2025, the highest figure for that period since 2020, according to Challenger, Gray, & Christmas. The tech sector has been hit the hardest, with over 89,000 layoffs in the industry alone. The firm found that more than 27,000 tech job losses since 2023 have been directly attributed to AI-driven redundancy, as companies streamline operations and restructure departments.\nAt the same time, companies are becoming more selective about who and where they hire. Entry-level roles are feeling the worst of this impact as the technology is increasingly good at automating junior-level work. Many firms are seeing easy cost-cutting opportunities at the entry level.\n\u201cA lot of entry-level work when you\u2019re fresh out of college is knowledge-intensive jobs where you\u2019re collecting data, transcribing data, and putting together basic visualizations, and learning the organization from the ground up,\u201d Tristan L. Botelho, associate professor of organizational behavior at Yale School of Management, told Fortune. \u201cAI can do that quite well, and I\u2019ve heard many managers say things like: \u2018We can reduce our entry-level headcount.\u2019 \u2026 The biggest disruption is likely among these low-level employees, particularly where work is predictable, tech-savvy, or more general.\u201d\nAccording to Handshake, a Gen Z\u2013focused career platform, entry-level job postings, particularly in corporate roles, have dropped 15% year over year. At the same time, the number of employers referencing \u201cAI\u201d in job descriptions has surged by 400% over the past two years.\nGen Z graduates feel the squeeze\nNearly half of Gen Z job seekers in the U.S. say they believe artificial intelligence has made their degrees less valuable, according to a recent survey. Fresh graduates also face a tightening job market; the unemployment rate for recent college grads has climbed to an estimated 6% in the 12 months leading up to May, significantly higher than the national average of around 4%.\nYoung workers in the tech sector are feeling some of the worst of the industry\u2019s slowdown. The unemployment rate for those ages 20 to 30 in the sector has jumped roughly 3% since the start of the year, according to Joseph Briggs, senior global economist at Goldman Sachs.\n\u201cThis is a much larger increase than we\u2019ve seen in the tech sector more broadly, or among other young workers,\u201d Briggs said on the bank\u2019s Exchanges podcast this week.\nCutting at the entry-level may make sense for a company\u2019s bottom line in the short term; however, organizations that squeeze hiring at the entry level too much could see this strategy backfire in the long term.\n\u201cIf a lot of firms are cutting, cutting, cutting at the entry level, there\u2019s a fear that they might actually miss out on the talent that\u2019s going to create their pipeline going forward, that\u2019s going to become the managers, executives, etc.,\u201d Botelho said.\nThe job market is hitting a wall\nThe long-standing fears around AI eating away at entry-level jobs haven\u2019t been helped by recent labor statistics.\nThe U.S. labor market showed signs of a serious slowdown in July, with weaker-than-expected job growth and downward revisions for previous months. Economists attributed the stall largely to business uncertainty driven by ongoing tariff changes under President Trump, which have made companies hesitant to invest or hire.\nIn March, the unemployment rate for college-educated Americans ages 22 to 27 hit 5.8%, the highest level in four years, according to data from the Federal Reserve Bank of New York. For some, the fi",
+    "source_url": "https://fortune.com/2025/08/08/ai-layoffs-jobs-market-shrinks-entry-level/",
+    "source_type": "web",
+    "resource_type": "Article",
+    "difficulty": "Advanced",
+    "is_free": true,
+    "work_role": "Cyber Defense Analyst",
+    "classification": "Replace",
+    "confidence": 0.85,
+    "rationale": "The artifact explicitly states that AI is automating 'knowledge-intensive jobs where you\u2019re collecting data, transcribing data, and putting together basic visualizations,' leading companies to 'reduce our entry-level headcount.' This directly indicates that AI is replacing specific, predictable tasks traditionally performed by junior staff rather than merely augmenting them. The emphasis on job cuts and reduced hiring for these roles supports a 'Replace' classification.",
+    "dcwf_tasks": [
+      {
+        "task_id": "AN-CS-001",
+        "task_name": "Collect data and information pertinent to the cyber environment.",
+        "relevance_score": 0.9,
+        "impact_description": "AI can automate the collection and initial aggregation of various data sources (e.g., logs, threat intelligence feeds, vulnerability scan results), significantly reducing the need for manual data gathering by junior analysts."
+      },
+      {
+        "task_id": "AN-OP-001",
+        "task_name": "Analyze event data for anomalies.",
+        "relevance_score": 0.8,
+        "impact_description": "AI-powered SIEM and SOAR platforms are increasingly capable of performing initial correlation, anomaly detection, and basic incident triage, automating foundational analytical tasks traditionally handled by entry-level SOC analysts."
+      },
+      {
+        "task_id": "OM-DAT-001",
+        "task_name": "Provide data input for databases/systems.",
+        "relevance_score": 0.8,
+        "impact_description": "AI can automate data extraction, transformation, and loading (ETL) processes, including the 'transcribing data' mentioned in the article, into various databases and systems, eliminating manual data entry by human operators."
+      }
+    ],
+    "work_roles": [
+      "Cyber Defense Analyst",
+      "Cyber Defense Incident Responder"
+    ],
+    "key_findings": [
+      "AI is a primary driver of workforce reductions, accounting for over 10,000 U.S. job cuts in the first seven months of 2025 directly linked to generative AI adoption, ranking among the top five causes of workforce reductions.",
+      "Entry-level roles are disproportionately affected, as AI automates predictable, knowledge-intensive tasks like data collection, transcription, and basic visualizations, leading to reduced headcount and a 15% drop in entry-level job postings year over year.",
+      "Companies are increasingly prioritizing 'AI fluency' in hiring, with job descriptions referencing 'AI' surging by 400% over the past two years, while recent graduates face a tightening job market and rising unemployment rates."
+    ],
+    "ai_tools_mentioned": [],
+    "stored_at": "2026-01-11T00:51:44.333591"
+  },
+  {
+    "artifact_id": "artifact_5afe7187b977",
+    "title": "YouTube Video: https://www.youtube.com/watch?v=7U6pKex9tbE",
+    "content": "Stop building AI automations. Start building agentic workflows. Google recently released their vibe coding platform, anti-gravity, and it's completely changing the way AI systems are built. I run a six-figure AI agency. I've built hundreds of AI automations using no code platforms like NADN, and I've sold these systems to multi-billion dollar companies. But Agentic Workflows are fundamentally changing how I run my business. No code platforms eliminated the need to code with their visual interface, but now you don't even need that. With tools like anti-gravity, you just describe what you want in plain language. You no longer have to think about multi-node workflows or even troubleshooting. The system figures it out and corrects itself when something breaks. In this video, I'll show you the best way to set up anti-gravity using the DOE [music] framework, which stands for directive orchestration and execution. And then we'll use that to build a Reddit news scraper which delivers a daily digest to you of all the trending topics in your niche [music] complete with infographic style visuals in just a matter of seconds. If you want access to the agent we built today and want to learn how to make money with AI and automations, I'll leave a link in the description. Let's dive in. Here we are inside of Google Anti-Gravity. And I wanted to take this automation that I built, which basically scrapes a bunch of Reddit feeds to get all of the trending topics relevant to my audience and then just delivers them into this really clean email format for me. And I wanted to see if we could do this all today, not knowing how to code, not knowing how to do anything technical, and letting anti-gravity do all of the work for us. If you've never used anti-gravity before and you want to know how to install it, you can just come over to anti-gravity.google. Go ahead and click download down here or download up here in the top right. And then what you're going to do, you're just going to install this on your system. You're going to log in with your Google account and you are ready to go. In order to start using this, you just want to make sure that you are inside of a folder somewhere on your own machine. So I'm just going to go ahead and click open folder and I'm just going to go over to my desktop and I'm just going to create a brand new folder. And I'm just going to call this Reddit news. It really doesn't matter what you call this. And now we have a folder. Go ahead, click open. And we can just go ahead and click do you trust the authors? Yes, I'm the author. So, I trust anyone on the folder desktop. Click trust. And now we have anti-gravity set up. It's ready to get to work for us. There are a couple of main things that you should know if you've never used anti-gravity before. The left side here is the explorer, which I'll show you how to have anti-gravity set this up entirely for you. So, you don't have to do anything. This is where all of your files and folders are kept. This right side is the agent where you actually talk to anti-gravity in normal language and tell it what you want to do. And then, if you come up here, terminal, you can go ahead and click new terminal. And it may seem fancy, but if you just go ahead and type terminal, you this terminal window has been around forever. And it's basically just a fancy way for you to talk to your system. You really don't need to know all that much about it, but just know that this is here. So, at this point, most people get lost. But let me show you exactly how to set this up so you never have to worry about it again. And you can literally use this format to create anything you want. So, I'm going to go over here and this is this agents.md file and this is how you want the system to behave. Truth be told, I got this from my man Nick Sarv. He gives this out for free, so I'm sure he won't mind sharing with you, especially if I'm hyping up his channel right here. But this is a really effective format. What this is is these are instructions for anti-gravity that tells it exactly how you want to structure all of your files and folders and exactly how you want it to behave. So, I'm just going to go ahead and I'm just going to highlight all of this and copy this over into anti-gravity. I'll leave a link in the description where you can get access to this yourself. So you can just go ahead and come into file, make a copy to your own Google drive or go ahead and download this in whatever format that you want. So if we take this over here and we come back to anti-gravity, I can come into Reddit news and I can go ahead and click the plus on new file. We can just call this agents.mm and MD is basically just in markdown format which anti-gravity will recognize. And then I can just paste in all of this and we can see it turned all of those asterisks and stuff like that into nice kind of language. And just go ahead and hit command S. This tripped me up the first time. you actually have to save thi",
+    "source_url": "https://www.youtube.com/watch?v=7U6pKex9tbE",
+    "source_type": "youtube",
+    "resource_type": "Video",
+    "difficulty": "Advanced",
+    "is_free": true,
+    "work_role": "Cybersecurity Engineer",
+    "classification": "Augment",
+    "confidence": 0.85,
+    "rationale": "The artifact demonstrates agentic AI platforms (e.g., Anti-Gravity) that allow users to build complex automations and systems using plain language, significantly reducing the need for traditional coding and manual troubleshooting. While the AI performs much of the technical execution and self-correction, human input remains essential for defining directives, making strategic choices, and refining requirements, shifting the human role to oversight and high-level guidance.",
+    "dcwf_tasks": [
+      {
+        "task_id": "SP-DEV-001",
+        "task_name": "Develops and implements security requirements into the design, development, deployment, review, and testing of applications.",
+        "relevance_score": 0.95,
+        "impact_description": "AI systems (Anti-Gravity) automate the generation of code (Python scripts) and define system architecture (execution layer), significantly accelerating the development process and reducing the demand for manual coding expertise. Humans now focus on high-level security requirements, system design intent, and validation."
+      },
+      {
+        "task_id": "OM-ADM-001",
+        "task_name": "Performs system administration activities such as configuration, change management, and troubleshooting.",
+        "relevance_score": 0.85,
+        "impact_description": "The 'self-annealing' (self-correcting/self-healing) feature of agentic workflows means the AI identifies and fixes its own errors (debugging, rewriting scripts, retesting), automating a large portion of traditional troubleshooting tasks related to system development and operational issues."
+      },
+      {
+        "task_id": "AN-TWA-001",
+        "task_name": "Analyzes threat and vulnerability data to identify trends and patterns.",
+        "relevance_score": 0.8,
+        "impact_description": "AI agents automate data collection (e.g., RSS feeds), filtering, analysis (using LLMs like Gemini for relevance evaluation), and summarization, producing actionable insights (e.g., top trending posts) rapidly. This frees human analysts to focus on deeper interpretation, strategic decision-making, and specialized threat intelligence."
+      }
+    ],
+    "work_roles": [
+      "Cybersecurity Engineer",
+      "Cyber Defense Analyst",
+      "Security Architect",
+      "Secure Software Developer"
+    ],
+    "key_findings": [
+      "Agentic workflows enable AI systems to plan, execute, monitor, and self-correct, drastically reducing manual effort in system building and maintenance.",
+      "New 'vibe coding' platforms (like Google Anti-Gravity) allow users to build complex AI automations using plain language, eliminating the need for traditional coding or even complex visual no-code interfaces.",
+      "The self-annealing (self-healing/self-correcting) nature of these systems automates a significant portion of troubleshooting tasks, with claims of automating up to 90% of such efforts."
+    ],
+    "ai_tools_mentioned": [
+      "Google Anti-Gravity",
+      "Gemini 3 Pro",
+      "ChatGPT",
+      "Nano Banana Pro"
+    ],
+    "stored_at": "2026-01-11T00:53:00.095279"
+  },
+  {
+    "artifact_id": "artifact_fcc19e50dd4c",
+    "title": "Web Article: https://research.aimultiple.com/ai-job-loss/",
+    "content": "AI could eliminate half of entry-level white-collar jobs within the next five years. These job losses could affect the global workforce faster than previous waves of technological change.\nBy 2027, millions of jobs may be displaced or significantly altered. While some roles will evolve, the workforce must prepare for a sharp increase in disrupted employment.\nWe gathered 20 predictions from AI experts, academic articles, and industry leaders on their expectations of AI job loss:\nAI job loss predictions according to experts\nNotes: The size of the plots is correlated with the size of job loss prediction.\nThe percentages referenced in our analysis are derived based on assumptions concerning overall job displacement. In specific scenarios, these assumptions included potential job gains resulting from the adoption of AI technologies. However, to maintain consistency in evaluating net job loss, any estimated job gains have been explicitly excluded from the calculation.\nAs a result, the final percentages presented reflect net job loss figures, ensuring a more conservative and focused interpretation of the potential impact on the workforce due to AI implementation.\nPascual Restrepo, 2025\nThough Restrepo doesn\u2019t forecast unemployment rates, he predicts that the relationship between labor and economic output will decouple in a post-AGI world and that labor\u2019s share of income will converge to zero. AGI could take place as early as the 2030s.1\nGeoffrey Hinton, 2025\nGeoffrey Hinton, a Nobel Prize\u2013winning computer scientist known as the \u201cgodfather of AI,\u201d warned that artificial intelligence will increase unemployment while driving higher profits, a result he attributes to capitalism rather than the technology itself. He noted that while mass layoffs have not yet materialized, AI is reducing entry-level opportunities.\nHinton sees healthcare as one of the few sectors that could benefit, as efficiency gains for doctors would expand access to care. However, he dismissed universal basic income as inadequate for addressing the loss of dignity and purpose tied to work.\nHe also cautioned about long-term risks, estimating a 10\u201320% chance that AI could pose an existential threat through uncontrollable superintelligence or misuse by malicious actors, while criticizing the weak regulatory efforts in the United States.2\nErik Brynjolfsson, Bharat Chandar, and Ruyu Chen, 2025\nAccording to their paper \u201cCanaries in the Coal Mine? Six Facts about the Recent Employment Effects of Artificial Intelligence\u201d, AI adoption is accelerating across industries, with companies utilizing it to boost productivity and reduce costs through the automation of routine tasks.\nThe analysis focuses on the labor market implications of widespread AI adoption, highlighting:\n- Displacement risks for clerical, data entry, and customer support jobs that rely heavily on repetitive processes.\n- New opportunities in oversight, data quality assurance, and human\u2013AI collaboration roles, which are emerging alongside automation.\n- Workforce transition needs exist, as many workers lack the technical or analytical skills required for these new positions.\nCharts and projections in the report indicate that by 2030, as many as 12\u201314% of workers may need to transition into new occupations as automation reshapes the employment landscape. Roles in healthcare, education, and AI maintenance are expected to expand, while administrative support jobs are expected to continue declining.\nThis suggests that while AI adoption will drive economic gains and productivity growth, it is also likely to deepen inequality unless governments and employers invest significantly in reskilling, mobility support, and other interventions to ease the transition.3\nKiran Tomlinson, Sonia Jaffe, Will Wang, Scott Counts, Siddharth Suri, 2025\nAccording to Microsoft\u2019s \u201cMeasuring the Occupational Implications of Generative AI\u201d research, occupations vary widely in their susceptibility to AI, with some jobs being significantly more likely to be affected than others.\nThe study ranks roles based on an AI applicability score that combines:\n- How much of the job can AI do (coverage)?\n- How completely it can do those tasks (completeness).\n- The variety of tasks it can handle (scope).\nJobs like interpreters, translators, historians, and customer service representatives scored highest, meaning AI can perform much of their work effectively, especially in text- or communication-heavy tasks.\nConversely, occupations such as nursing assistants, dishwashers, roofers, and surgical assistants scored near zero, indicating that AI is currently not capable of taking over their primarily physical, hands-on, or human-interaction-heavy responsibilities.\nThis suggests that while AI is rapidly advancing in automating cognitive and routine digital work, it remains limited in replacing roles that require dexterity, emotional intelligence, or real-world adaptability.4\nEric Schmidt, 2025\nDr. Schmidt (former CEO of Google) predicts that within o",
+    "source_url": "https://research.aimultiple.com/ai-job-loss/",
+    "source_type": "web",
+    "resource_type": "Article",
+    "difficulty": "Advanced",
+    "is_free": true,
+    "work_role": "Cyber Defense Analyst",
+    "classification": "Augment",
+    "confidence": 0.9,
+    "rationale": "The artifact explicitly states that roles in 'cybersecurity' are expected to grow, alongside AI development and business intelligence. While AI is poised to automate many routine tasks across industries, it will primarily augment cybersecurity professionals by handling mundane tasks and simultaneously create new areas of focus related to securing AI systems, rather than replacing the human workforce in this field.",
+    "dcwf_tasks": [
+      {
+        "task_id": "SP-ARC-001",
+        "task_name": "Develop and Implement Security Architectures",
+        "relevance_score": 0.9,
+        "impact_description": "AI will necessitate the development of new security architectures for integrating and optimizing AI systems, including addressing ethical considerations and bias detection, thus augmenting this task's scope."
+      },
+      {
+        "task_id": "SP-DEV-001",
+        "task_name": "Develop Secure Systems and Applications",
+        "relevance_score": 0.85,
+        "impact_description": "While AI may assist in writing and debugging code, human cybersecurity professionals will remain essential for architecting systems that are secure, efficient, and address complex security vulnerabilities, thereby augmenting their development process."
+      },
+      {
+        "task_id": "PR-CDA-001",
+        "task_name": "Perform Cyber Defense Analysis",
+        "relevance_score": 0.8,
+        "impact_description": "AI can automate initial threat detection, data correlation, and analysis of routine security events, allowing human analysts to focus on complex investigations, threat hunting, and strategic decision-making, significantly augmenting their efficiency."
+      },
+      {
+        "task_id": "OV-TEA-001",
+        "task_name": "Conduct Technology Watch and Trend Research",
+        "relevance_score": 0.9,
+        "impact_description": "Cybersecurity professionals will need to constantly research and understand the evolving AI threat landscape, new AI-specific vulnerabilities, and ethical implications to secure organizational assets, making this task increasingly critical."
+      }
+    ],
+    "work_roles": [
+      "Cyber Defense Analyst",
+      "Security Architect",
+      "Security Engineer",
+      "Secure Software Developer"
+    ],
+    "key_findings": [
+      "AI is projected to significantly displace or alter a large percentage of jobs, particularly entry-level white-collar, clerical, data entry, and customer support roles, by automating routine and repetitive tasks.",
+      "Despite overall job displacement, roles in AI development, business intelligence, cybersecurity, and sustainability are expected to grow, requiring workers to reskill and adapt to new technologies.",
+      "AI will primarily augment human labor by automating tasks within roles rather than replacing entire jobs, necessitating a focus on human decision-making, creativity, and the development of ethical AI governance."
+    ],
+    "ai_tools_mentioned": [
+      "Generative AI",
+      "Large Language Models (LLMs)",
+      "Reinforcement learning and planning tools",
+      "AI chatbots"
+    ],
+    "stored_at": "2026-01-11T02:11:32.852909"
+  }
+]
