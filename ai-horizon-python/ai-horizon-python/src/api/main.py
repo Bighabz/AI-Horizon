@@ -1811,7 +1811,7 @@ async def list_resources(
         })
 
     # Sort by most recent first
-    results.sort(key=lambda x: x.get("stored_at", ""), reverse=True)
+    results.sort(key=lambda x: x.get("stored_at") or "", reverse=True)
 
     # Calculate pagination
     total = len(results)
