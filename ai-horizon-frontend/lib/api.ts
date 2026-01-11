@@ -2,7 +2,7 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import { SubmitResponse, ChatResponse, SearchParams, StatsResponse, SkillsResponse, SkillItem, EvidenceDetail } from './types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8003';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ai-horizon-production.up.railway.app';
 const SESSION_PREFIX = process.env.NEXT_PUBLIC_SESSION_PREFIX || 'horizon_';
 const SESSION_KEY = `${SESSION_PREFIX}session`;
 
