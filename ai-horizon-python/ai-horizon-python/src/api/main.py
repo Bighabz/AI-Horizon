@@ -722,11 +722,14 @@ async def serve_ui():
 @app.get("/api/health")
 async def health():
     """Health check and API info."""
+    import os
     return {
         "name": "AI Horizon API",
         "version": "1.0.0",
         "status": "healthy",
         "gemini_configured": client is not None,
+        "evidence_count": len(evidence_store),
+        "supabase_configured": bool(os.getenv("SUPABASE_URL")) and bool(os.getenv("SUPABASE_SERVICE_KEY")),
         "stores": {
             "dcwf": DCWF_STORE_NAME is not None,
             "artifacts": ARTIFACTS_STORE_NAME is not None,
