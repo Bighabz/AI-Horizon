@@ -1803,7 +1803,7 @@ async def list_resources(
             "work_roles": artifact.get("work_roles", []),
             "classification": artifact.get("classification"),
             "confidence": artifact.get("confidence"),
-            "rationale": artifact.get("rationale", "")[:200],
+            "rationale": (artifact.get("rationale") or "")[:200],
             "stored_at": artifact.get("stored_at"),
         })
 
