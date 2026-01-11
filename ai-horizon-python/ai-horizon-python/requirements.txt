@@ -1,0 +1,46 @@
+# Core
+google-genai>=0.8.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+
+# Web Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
+# CLI
+typer[all]>=0.9.0
+rich>=13.0.0
+
+# Extraction - PDF
+pypdf2>=3.0.0
+pdfplumber>=0.10.0
+
+# Extraction - DOCX
+python-docx>=1.0.0
+
+# Extraction - YouTube
+youtube-transcript-api>=0.6.0
+
+# Extraction - Web
+trafilatura>=1.6.0
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+httpx>=0.27.0
+
+# Async
+aiofiles>=23.0.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.0.0
+
+# Development
+black>=24.0.0
+ruff>=0.3.0
+mypy>=1.8.0
+
+# Database
+supabase>=2.0.0

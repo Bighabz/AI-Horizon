@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  /* Dark theme base */
+  --color-background: oklch(15.5% 0.02 265);
+  --color-foreground: oklch(96% 0.01 265);
+
+  --color-card: oklch(22% 0.02 265);
+  --color-card-foreground: oklch(96% 0.01 265);
+
+  --color-popover: oklch(22% 0.02 265);
+  --color-popover-foreground: oklch(96% 0.01 265);
+
+  --color-primary: oklch(55% 0.24 265);
+  --color-primary-foreground: oklch(100% 0 0);
+
+  --color-secondary: oklch(32% 0.02 265);
+  --color-secondary-foreground: oklch(96% 0.01 265);
+
+  --color-muted: oklch(32% 0.02 265);
+  --color-muted-foreground: oklch(65% 0.02 265);
+
+  --color-accent: oklch(70% 0.15 175);
+  --color-accent-foreground: oklch(100% 0 0);
+
+  --color-destructive: oklch(60% 0.24 25);
+  --color-destructive-foreground: oklch(100% 0 0);
+
+  --color-border: oklch(40% 0.02 265);
+  --color-input: oklch(40% 0.02 265);
+  --color-ring: oklch(55% 0.24 265);
+
+  --radius: 0.5rem;
+
+  /* Classification Colors */
+  --color-replace: oklch(60% 0.24 25);
+  --color-augment: oklch(70% 0.18 85);
+  --color-remain: oklch(65% 0.18 155);
+  --color-new-task: oklch(60% 0.2 250);
+
+  /* Custom accent colors */
+  --color-orange-accent: oklch(70% 0.2 50);
+  --color-teal-accent: oklch(70% 0.15 175);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    overflow-x: hidden;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    overflow-x: hidden;
+  }
+}
+
+/* Improve mobile UX */
+@layer utilities {
+  /* Better touch targets for mobile */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent text overflow breaking layout */
+  .text-balance {
+    text-wrap: balance;
+  }
+}
