@@ -326,7 +326,7 @@ def search_evidence_store(query: str, limit: int = 5) -> list[dict]:
             score += 5
 
         # Check content (first 2000 chars)
-        content = artifact.get("content", "")[:2000].lower()
+        content = (artifact.get("content") or "")[:2000].lower()
         if query_lower in content:
             score += 3
 
@@ -843,7 +843,7 @@ async def chat(request: ChatRequest):
                     evidence_summary += f"**{i}. {ev.get('title', 'Untitled')}**\n"
                     evidence_summary += f"   - Classification: {ev.get('classification', 'Unknown')}\n"
                     if ev.get('rationale'):
-                        evidence_summary += f"   - Summary: {ev.get('rationale')[:200]}...\n"
+                        evidence_summary += f"   - Summary: {(ev.get('rationale') or '')[:200]}...\n"
                     evidence_summary += "\n"
                 assistant_message = f"I couldn't generate a full response right now, but here's what I found in our evidence store:\n\n{evidence_summary}"
             else:
@@ -870,7 +870,7 @@ async def chat(request: ChatRequest):
             for i, ev in enumerate(relevant_evidence, 1):
                 evidence_summary += f"**{i}. {ev.get('title', 'Untitled')}** ({ev.get('classification', 'Unknown')})\n"
                 if ev.get('rationale'):
-                    evidence_summary += f"   {ev.get('rationale')[:150]}...\n"
+                    evidence_summary += f"   {(ev.get('rationale') or '')[:150]}...\n"
             evidence_summary += "\nPlease try again in a minute for a full AI-generated response."
             return ChatResponse(
                 output=evidence_summary,
@@ -893,7 +893,7 @@ async def chat(request: ChatRequest):
             for i, ev in enumerate(relevant_evidence, 1):
                 evidence_summary += f"**{i}. {ev.get('title', 'Untitled')}** ({ev.get('classification', 'Unknown')})\n"
                 if ev.get('rationale'):
-                    evidence_summary += f"   {ev.get('rationale')[:150]}...\n"
+                    evidence_summary += f"   {(ev.get('rationale') or '')[:150]}...\n"
             evidence_summary += "\nPlease try again for a full AI-generated response."
             return ChatResponse(
                 output=evidence_summary,
@@ -1033,7 +1033,7 @@ def search_local_evidence(query: str, filters: dict, limit: int = 20) -> list[di
                     impact.lower(),
                     artifact.get("title", "").lower(),
                     artifact.get("rationale", "").lower(),
-                    artifact.get("content", "")[:2000].lower(),
+                    (artifact.get("content") or "")[:2000].lower(),
                     " ".join(artifact.get("key_findings", [])).lower(),
                 ])
                 # Check if ANY query word matches
@@ -1044,7 +1044,7 @@ def search_local_evidence(query: str, filters: dict, limit: int = 20) -> list[di
                 task_map[task_id] = {
                     "task_id": task_id,
                     "task_name": task_name or f"Task {task_id}",
-                    "description": impact or artifact.get("rationale", "")[:200],
+                    "description": impact or (artifact.get("rationale") or "")[:200],
                     "classification": artifact.get("classification", "Augment"),
                     "confidence": artifact.get("confidence", 0.7),
                     "evidence_count": 1,
@@ -1608,7 +1608,7 @@ async def get_artifact_detail(artifact_id: str):
             return {
                 "artifact_id": artifact.get("artifact_id"),
                 "title": artifact.get("title", "Untitled"),
-                "content": artifact.get("content", "")[:2000],  # Limit content for response
+                "content": (artifact.get("content") or "")[:2000],  # Limit content for response
                 "source_url": artifact.get("source_url"),
                 "source_type": artifact.get("source_type", "web"),
                 "resource_type": artifact.get("resource_type", "Article"),
