@@ -1946,16 +1946,33 @@ async def cleanup_incomplete_records():
 
 @app.delete("/api/admin/delete-artifact/{artifact_id}")
 async def delete_artifact_by_id(artifact_id: str):
-    """Delete a specific artifact by its artifact_id."""
+    """Delete a specific artifact by its artifact_id (format: artifact_XXXX or raw UUID)."""
     try:
         from src.api.supabase_client import get_supabase
         client = get_supabase()
 
-        response = client.table("document_registry").delete().eq(
-            "artifact_id", artifact_id
-        ).execute()
+        # The artifact_id is formatted as "artifact_<first12chars_of_uuid>"
+        # We need to find the record by matching the start of the UUID
+        if artifact_id.startswith("artifact_"):
+            uuid_prefix = artifact_id.replace("artifact_", "")
+            # Search for records where id starts with this prefix
+            response = client.table("document_registry").select("id").execute()
+            matching_id = None
+            for row in response.data:
+                if row["id"].startswith(uuid_prefix):
+                    matching_id = row["id"]
+                    break
 
-        deleted_count = len(response.data) if response.data else 0
+            if not matching_id:
+                raise HTTPException(status_code=404, detail=f"Artifact {artifact_id} not found")
+
+            # Delete by actual UUID
+            delete_response = client.table("document_registry").delete().eq("id", matching_id).execute()
+            deleted_count = len(delete_response.data) if delete_response.data else 0
+        else:
+            # Assume it's a raw UUID
+            response = client.table("document_registry").delete().eq("id", artifact_id).execute()
+            deleted_count = len(response.data) if response.data else 0
 
         if deleted_count == 0:
             raise HTTPException(status_code=404, detail=f"Artifact {artifact_id} not found")
