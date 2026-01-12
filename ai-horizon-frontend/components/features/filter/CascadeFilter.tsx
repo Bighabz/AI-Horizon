@@ -36,20 +36,35 @@ export function CascadeFilter({ onFilterChange }: CascadeFilterProps) {
         }
     });
 
-    // 2. Fetch Tasks when Role is selected
-    const { data: tasks = [], isLoading: isLoadingTasks } = useQuery({
-        queryKey: ['tasks', selectedRole],
+    // 2. Fetch all DCWF Tasks
+    const { data: allTasks = [], isLoading: isLoadingTasks } = useQuery({
+        queryKey: ['dcwf-tasks'],
         queryFn: async () => {
-            if (selectedRole === "All") return [];
-            const { data } = await api.get<{ results: SearchResult[] }>('/api/search', {
-                params: { job_role: selectedRole }
+            const response = await api.get<{ results: SearchResult[] }>('/api/search', {
+                params: {}
             });
-            return data.results || [];
+            return response.data?.results || [];
         },
-        enabled: selectedRole !== "All",
-        retry: 1,
-        staleTime: 30000,
+        staleTime: 60000,
     });
+
+    // Filter tasks based on selected role - spread to plain array for Radix compatibility
+    const tasks = React.useMemo(() => {
+        const baseArray = [...allTasks];
+        if (selectedRole === "All") return baseArray;
+        return baseArray.filter(t =>
+            t.work_roles?.some(wr => wr.toLowerCase().includes(selectedRole.toLowerCase()))
+        );
+    }, [allTasks, selectedRole]);
+
+    // Pre-build task options as plain objects for Radix Select compatibility
+    const taskOptions = React.useMemo(() => {
+        return tasks.map((t, i) => ({
+            key: `task-${i}`,
+            value: t.task_id,
+            label: `${t.task_id} - ${(t.task_name || '').substring(0, 35)}...`
+        }));
+    }, [tasks]);
 
     // Derived Data: Categories
     const categories = React.useMemo(() => {
@@ -98,7 +113,7 @@ export function CascadeFilter({ onFilterChange }: CascadeFilterProps) {
                         <label className="text-sm font-medium text-muted-foreground">DCWF Category</label>
                         <Select value={selectedCategory} onValueChange={(val) => {
                             setSelectedCategory(val);
-                            setSelectedRole("All"); // Reset downstream
+                            setSelectedRole("All");
                             setSelectedTask("All");
                         }}>
                             <SelectTrigger>
@@ -141,15 +156,21 @@ export function CascadeFilter({ onFilterChange }: CascadeFilterProps) {
                         <Select
                             value={selectedTask}
                             onValueChange={setSelectedTask}
-                            disabled={selectedRole === "All"}
+                            disabled={isLoadingTasks}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder={isLoadingTasks ? "Loading tasks..." : "Select Task"} />
+                                <SelectValue placeholder={
+                                    isLoadingTasks ? "Loading tasks..." :
+                                    tasks.length === 0 ? "No tasks available" :
+                                    "Select Task"
+                                } />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="All">All Tasks</SelectItem>
-                                {tasks.map(t => (
-                                    <SelectItem key={t.task_id} value={t.task_id}>{t.task_id} - {t.task_name.substring(0, 40)}...</SelectItem>
+                                {taskOptions.map(opt => (
+                                    <SelectItem key={opt.key} value={opt.value}>
+                                        {opt.label}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -194,4 +215,3 @@ export function CascadeFilter({ onFilterChange }: CascadeFilterProps) {
         </Card>
     );
 }
-
