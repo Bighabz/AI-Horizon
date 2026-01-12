@@ -30,12 +30,36 @@ def get_supabase() -> Client:
 
 
 def load_artifacts() -> list[dict]:
-    """Load all artifacts from Supabase."""
+    """Load all artifacts from Supabase and transform to expected format."""
     try:
         client = get_supabase()
         response = client.table("document_registry").select("*").order("created_at", desc=True).execute()
         logger.info(f"Loaded {len(response.data)} artifacts from Supabase")
-        return response.data
+
+        # Transform Supabase columns to expected app format
+        transformed = []
+        for row in response.data:
+            transformed.append({
+                "artifact_id": f"artifact_{row['id'][:12]}" if row.get('id') else None,
+                "title": row.get("file_name"),
+                "source_url": row.get("source_url"),
+                "url": row.get("source_url"),  # Alias
+                "source_type": row.get("source_type", "Article"),
+                "resource_type": row.get("source_type", "Article"),
+                "classification": row.get("classification"),
+                "confidence": row.get("confidence"),
+                "rationale": row.get("rationale"),
+                "dcwf_tasks": row.get("dcwf_tasks", []),
+                "key_findings": row.get("key_findings", []),
+                "work_role": row.get("dcwf_tasks", [{}])[0].get("work_role") if row.get("dcwf_tasks") else "Cyber Defense Analyst",
+                "work_roles": [t.get("work_role") for t in row.get("dcwf_tasks", []) if t.get("work_role")] or ["Cyber Defense Analyst"],
+                "difficulty": "Advanced" if row.get("confidence", 0) > 0.7 else "Beginner",
+                "is_free": True,
+                "stored_at": row.get("created_at"),
+                "supabase_id": row.get("id"),  # Keep original ID for deletion
+            })
+
+        return transformed
     except Exception as e:
         logger.error(f"Failed to load artifacts from Supabase: {e}")
         return []
@@ -47,10 +71,13 @@ def save_artifact(artifact_data: dict) -> bool:
         client = get_supabase()
 
         # Map our artifact data to document_registry columns
+        # Try both 'url' and 'source_url' keys for source URL
+        source_url = artifact_data.get("source_url") or artifact_data.get("url") or ""
+
         record = {
             "file_name": artifact_data.get("title", "Untitled"),
-            "source_type": artifact_data.get("source_type", "Article"),
-            "source_url": artifact_data.get("url", ""),
+            "source_type": artifact_data.get("source_type") or artifact_data.get("resource_type", "Article"),
+            "source_url": source_url,
             "classification": artifact_data.get("classification", "Augment"),
             "confidence": artifact_data.get("confidence", 0.5),
             "rationale": artifact_data.get("rationale", ""),
@@ -62,7 +89,7 @@ def save_artifact(artifact_data: dict) -> bool:
         }
 
         response = client.table("document_registry").insert(record).execute()
-        logger.info(f"Saved artifact to Supabase: {record['file_name']}")
+        logger.info(f"Saved artifact to Supabase: {record['file_name']} with URL: {source_url[:50] if source_url else 'NONE'}")
         return True
     except Exception as e:
         logger.error(f"Failed to save artifact to Supabase: {e}")
