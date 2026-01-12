@@ -70,7 +70,7 @@ export function CascadeFilter({ onFilterChange }: CascadeFilterProps) {
             taskId: selectedTask,
             classifications: selectedClassifications
         });
-    }, [selectedCategory, selectedRole, selectedTask, selectedClassifications]);
+    }, [selectedCategory, selectedRole, selectedTask, selectedClassifications, onFilterChange]);
 
     // Handlers
     const toggleClassification = (cls: string) => {
