@@ -1318,7 +1318,16 @@ async def submit_artifact(
     
     if not content:
         raise HTTPException(status_code=400, detail="No content or URL provided")
-    
+
+    # Generate title for text-only submissions if not already set
+    if not title and content:
+        # Extract first meaningful sentence or first 50 chars
+        first_line = content.strip().split('\n')[0][:100]
+        if len(first_line) > 50:
+            title = f"Text: {first_line[:50]}..."
+        else:
+            title = f"Text: {first_line}"
+
     # Check for content duplicates (hash-based)
     if check_duplicate(content, str(request.url) if request.url else None):
         return SubmitArtifactResponse(
@@ -2094,6 +2103,30 @@ async def delete_artifact_by_id(artifact_id: str):
         raise
     except Exception as e:
         logger.error(f"Delete artifact error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/admin/cleanup-untitled")
+async def cleanup_untitled_artifacts():
+    """Delete all artifacts with 'Untitled' as their title."""
+    try:
+        from src.api.supabase_client import get_supabase
+        client = get_supabase()
+
+        # Find and delete all untitled records
+        response = client.table("document_registry").delete().eq("file_name", "Untitled").execute()
+        deleted_count = len(response.data) if response.data else 0
+
+        # Reload the evidence store
+        load_evidence_store()
+
+        return {
+            "success": True,
+            "deleted_count": deleted_count,
+            "message": f"Deleted {deleted_count} untitled artifact(s)"
+        }
+    except Exception as e:
+        logger.error(f"Cleanup untitled error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
