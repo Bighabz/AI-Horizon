@@ -39,6 +39,13 @@ def load_artifacts() -> list[dict]:
         # Transform Supabase columns to expected app format
         transformed = []
         for row in response.data:
+            # Get work_roles - prefer direct field, fall back to dcwf_tasks extraction
+            work_roles = row.get("work_roles") or []
+            if not work_roles:
+                work_roles = [t.get("work_role") for t in row.get("dcwf_tasks", []) if t.get("work_role")]
+            if not work_roles:
+                work_roles = ["Cyber Defense Analyst"]  # Default fallback
+
             transformed.append({
                 "artifact_id": f"artifact_{row['id'][:12]}" if row.get('id') else None,
                 "title": row.get("file_name"),
@@ -51,8 +58,8 @@ def load_artifacts() -> list[dict]:
                 "rationale": row.get("rationale"),
                 "dcwf_tasks": row.get("dcwf_tasks", []),
                 "key_findings": row.get("key_findings", []),
-                "work_role": row.get("dcwf_tasks", [{}])[0].get("work_role") if row.get("dcwf_tasks") else "Cyber Defense Analyst",
-                "work_roles": [t.get("work_role") for t in row.get("dcwf_tasks", []) if t.get("work_role")] or ["Cyber Defense Analyst"],
+                "work_role": work_roles[0] if work_roles else "Cyber Defense Analyst",
+                "work_roles": work_roles,
                 "difficulty": "Advanced" if row.get("confidence", 0) > 0.7 else "Beginner",
                 "is_free": True,
                 "stored_at": row.get("created_at"),
@@ -74,6 +81,11 @@ def save_artifact(artifact_data: dict) -> bool:
         # Try both 'url' and 'source_url' keys for source URL
         source_url = artifact_data.get("source_url") or artifact_data.get("url") or ""
 
+        # Get work_roles - use provided or extract from dcwf_tasks
+        work_roles = artifact_data.get("work_roles", [])
+        if not work_roles and artifact_data.get("dcwf_tasks"):
+            work_roles = [t.get("work_role") for t in artifact_data.get("dcwf_tasks", []) if t.get("work_role")]
+
         record = {
             "file_name": artifact_data.get("title", "Untitled"),
             "source_type": artifact_data.get("source_type") or artifact_data.get("resource_type", "Article"),
@@ -83,6 +95,7 @@ def save_artifact(artifact_data: dict) -> bool:
             "rationale": artifact_data.get("rationale", ""),
             "dcwf_tasks": artifact_data.get("dcwf_tasks", []),
             "key_findings": artifact_data.get("key_findings", []),
+            "work_roles": work_roles,  # Save work_roles to database
             "scores": artifact_data.get("scores", {}),
             "content_length": len(artifact_data.get("content", "")),
             "extraction_method": artifact_data.get("extraction_method", "trafilatura"),
