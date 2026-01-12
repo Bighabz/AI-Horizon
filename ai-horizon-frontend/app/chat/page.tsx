@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { sendChatMessage, getSessionId } from '@/lib/api';
@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import {
     Send, User, Bot, ExternalLink,
     GraduationCap, Target, Lightbulb, BookOpen,
-    TrendingUp, HelpCircle, Sparkles
+    TrendingUp, HelpCircle, Sparkles, Loader2
 } from 'lucide-react';
 import { ChatResponse } from '@/lib/types';
 
@@ -108,7 +108,7 @@ function formatMessage(content: string): React.ReactNode {
     return <div className="space-y-1">{elements}</div>;
 }
 
-export default function ChatPage() {
+function ChatContent() {
     const searchParams = useSearchParams();
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<Message[]>([
@@ -132,6 +132,7 @@ export default function ChatPage() {
     ]);
     const scrollRef = useRef<HTMLDivElement>(null);
     const [contextSent, setContextSent] = useState(false);
+    const contextProcessedRef = useRef(false);
 
     // Initialize session
     useEffect(() => {
@@ -152,14 +153,15 @@ export default function ChatPage() {
         }
     });
 
-    const handleSend = (messageText?: string) => {
+    // Memoized send function
+    const handleSend = useCallback((messageText?: string) => {
         const text = messageText || input;
         if (!text.trim()) return;
 
         setMessages(prev => [...prev, { role: 'user', content: text }]);
         setInput('');
         mutation.mutate(text);
-    };
+    }, [input, mutation]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -175,14 +177,15 @@ export default function ChatPage() {
     // Handle context from URL (e.g., from submit page)
     useEffect(() => {
         const context = searchParams.get('context');
-        if (context && !contextSent) {
+        if (context && !contextProcessedRef.current) {
+            contextProcessedRef.current = true;
             setContextSent(true);
-            // Small delay to ensure component is ready
-            setTimeout(() => {
-                handleSend(context);
-            }, 500);
+            // Add user message immediately
+            setMessages(prev => [...prev, { role: 'user', content: context }]);
+            // Send to API
+            mutation.mutate(context);
         }
-    }, [searchParams, contextSent]);
+    }, [searchParams, mutation]);
 
     // Career-focused quick actions
     const QUICK_ACTIONS = [
@@ -367,5 +370,18 @@ export default function ChatPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+// Wrap in Suspense for useSearchParams
+export default function ChatPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        }>
+            <ChatContent />
+        </Suspense>
     );
 }
