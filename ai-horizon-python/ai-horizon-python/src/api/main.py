@@ -1834,6 +1834,9 @@ async def list_resources(
     resource_type: Optional[str] = None,
     difficulty: Optional[str] = None,
     is_free: Optional[bool] = None,
+    dcwf_task: Optional[str] = None,
+    classification: Optional[str] = None,
+    query: Optional[str] = None,
     page: int = 1,
     limit: int = 20,
 ):
@@ -1846,6 +1849,9 @@ async def list_resources(
         resource_type: Filter by resource type (Video, Course, etc.)
         difficulty: Filter by difficulty level
         is_free: Filter by free/premium
+        dcwf_task: Filter by DCWF task ID
+        classification: Filter by classification (Replace, Augment, Remain Human, New Task)
+        query: Text search in title and rationale
         page: Page number (1-indexed)
         limit: Items per page (default 20, max 100)
     """
@@ -1872,6 +1878,27 @@ async def list_resources(
 
         if is_free is not None and artifact.get("is_free", True) != is_free:
             continue
+
+        # DCWF task filter
+        if dcwf_task:
+            dcwf_tasks = artifact.get("dcwf_tasks", [])
+            task_ids = [t.get("task_id", "") for t in dcwf_tasks]
+            if not any(dcwf_task.upper() in tid.upper() for tid in task_ids):
+                continue
+
+        # Classification filter
+        if classification:
+            artifact_cls = artifact.get("classification", "")
+            if classification.lower() != artifact_cls.lower():
+                continue
+
+        # Text search in title and rationale
+        if query:
+            title = (artifact.get("title") or "").lower()
+            rationale = (artifact.get("rationale") or "").lower()
+            query_lower = query.lower()
+            if query_lower not in title and query_lower not in rationale:
+                continue
 
         results.append({
             "artifact_id": artifact.get("artifact_id"),
