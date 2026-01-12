@@ -9,10 +9,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FilterX } from "lucide-react";
 import { SearchResult } from '@/lib/types';
 
-interface CascadeFilterProps {
-    onFilterChange: (filters: FilterState) => void;
-}
-
 export interface FilterState {
     category: string;
     role: string;
@@ -20,12 +16,17 @@ export interface FilterState {
     classifications: string[];
 }
 
-export function CascadeFilter({ onFilterChange }: CascadeFilterProps) {
-    // State
-    const [selectedCategory, setSelectedCategory] = useState<string>("All");
-    const [selectedRole, setSelectedRole] = useState<string>("All");
-    const [selectedTask, setSelectedTask] = useState<string>("All");
-    const [selectedClassifications, setSelectedClassifications] = useState<string[]>([]);
+interface CascadeFilterProps {
+    onFilterChange: (filters: FilterState) => void;
+    initialFilters?: Partial<FilterState>;
+}
+
+export function CascadeFilter({ onFilterChange, initialFilters }: CascadeFilterProps) {
+    // State - initialize from props if provided
+    const [selectedCategory, setSelectedCategory] = useState<string>(initialFilters?.category || "All");
+    const [selectedRole, setSelectedRole] = useState<string>(initialFilters?.role || "All");
+    const [selectedTask, setSelectedTask] = useState<string>(initialFilters?.taskId || "All");
+    const [selectedClassifications, setSelectedClassifications] = useState<string[]>(initialFilters?.classifications || []);
 
     // 1. Fetch Roles (Source for Categories & Roles)
     const { data: roles = [], isLoading: isLoadingRoles } = useQuery({
