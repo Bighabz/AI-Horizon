@@ -1032,12 +1032,12 @@ def search_local_evidence(query: str, filters: dict, limit: int = 20) -> list[di
 
         if filters.get("job_role"):
             role_match = False
-            work_roles = artifact.get("work_roles", [])
-            work_role = artifact.get("work_role", "")
-            if filters["job_role"].lower() in work_role.lower():
+            work_roles = artifact.get("work_roles", []) or []
+            work_role = artifact.get("work_role") or ""
+            if work_role and filters["job_role"].lower() in work_role.lower():
                 role_match = True
             for wr in work_roles:
-                if filters["job_role"].lower() in wr.lower():
+                if wr and filters["job_role"].lower() in wr.lower():
                     role_match = True
                     break
             if not role_match:

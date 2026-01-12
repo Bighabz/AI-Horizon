@@ -116,6 +116,58 @@ export default function SubmitPage() {
     const isError = submitMutation.isError || uploadMutation.isError;
     const error = submitMutation.error || uploadMutation.error;
 
+    // Show duplicate content result
+    if (result && result.is_duplicate === true) {
+        return (
+            <div className="max-w-3xl mx-auto py-8 space-y-6">
+                <div className="text-center space-y-2">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-500/10 mb-4">
+                        <AlertCircle className="h-8 w-8 text-blue-500" />
+                    </div>
+                    <h1 className="text-3xl font-bold">Duplicate Content</h1>
+                    <p className="text-muted-foreground">
+                        This content has already been submitted and analyzed.
+                    </p>
+                </div>
+
+                <Card className="border-2 border-blue-500/20">
+                    <CardContent className="py-6 space-y-4">
+                        <Alert className="border-blue-500/30 bg-blue-500/5">
+                            <AlertCircle className="h-4 w-4 text-blue-500" />
+                            <AlertTitle>Already in Database</AlertTitle>
+                            <AlertDescription>
+                                {result.message || "This URL or content was previously submitted. No duplicate entry was created."}
+                            </AlertDescription>
+                        </Alert>
+                        {result.classification && (
+                            <div className="text-center pt-4 border-t">
+                                <p className="text-sm text-muted-foreground mb-2">Previous Classification</p>
+                                <ClassificationBadge
+                                    type={result.classification.classification as "Replace" | "Augment" | "Remain Human" | "New Task"}
+                                    className="text-lg px-6 py-2"
+                                />
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <Button onClick={resetForm} variant="outline" className="flex-1">
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Submit Different Content
+                    </Button>
+                    <Button
+                        onClick={() => router.push('/resources')}
+                        className="flex-1"
+                    >
+                        View Evidence Library
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     // Show irrelevant content result
     if (result && result.is_relevant === false) {
         return (
