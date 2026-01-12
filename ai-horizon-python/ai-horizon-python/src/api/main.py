@@ -1911,6 +1911,40 @@ async def list_skills():
 
 
 # ============================================================================
+# Admin Endpoints
+# ============================================================================
+
+@app.delete("/api/admin/cleanup-incomplete")
+async def cleanup_incomplete_records():
+    """
+    Delete records from Supabase that have no artifact_id or source_url.
+    These are incomplete submissions that clutter the database.
+    """
+    try:
+        from src.api.supabase_client import get_supabase
+        client = get_supabase()
+
+        # Delete records where source_url is empty or null
+        response = client.table("document_registry").delete().or_(
+            "source_url.is.null,source_url.eq."
+        ).execute()
+
+        deleted_count = len(response.data) if response.data else 0
+
+        # Reload the evidence store
+        load_evidence_store()
+
+        return {
+            "success": True,
+            "deleted_count": deleted_count,
+            "message": f"Deleted {deleted_count} incomplete records"
+        }
+    except Exception as e:
+        logger.error(f"Cleanup error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
 # Main
 # ============================================================================
 
