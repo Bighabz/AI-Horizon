@@ -44,9 +44,11 @@ export function CascadeFilter({ onFilterChange }: CascadeFilterProps) {
             const { data } = await api.get<{ results: SearchResult[] }>('/api/search', {
                 params: { job_role: selectedRole }
             });
-            return data.results;
+            return data.results || [];
         },
-        enabled: selectedRole !== "All"
+        enabled: selectedRole !== "All",
+        retry: 1,
+        staleTime: 30000,
     });
 
     // Derived Data: Categories
@@ -139,10 +141,10 @@ export function CascadeFilter({ onFilterChange }: CascadeFilterProps) {
                         <Select
                             value={selectedTask}
                             onValueChange={setSelectedTask}
-                            disabled={selectedRole === "All" || isLoadingTasks}
+                            disabled={selectedRole === "All"}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Select Task" />
+                                <SelectValue placeholder={isLoadingTasks ? "Loading tasks..." : "Select Task"} />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="All">All Tasks</SelectItem>
