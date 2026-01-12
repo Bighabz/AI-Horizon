@@ -1969,9 +1969,11 @@ async def list_skills():
     role_stats = {}
 
     for artifact in evidence_store:
-        work_roles = artifact.get("work_roles", [])
+        # Get unique work roles for this artifact (deduplicate)
+        work_roles_set = set(artifact.get("work_roles", []))
         if artifact.get("work_role"):
-            work_roles = [artifact.get("work_role")] + work_roles
+            work_roles_set.add(artifact.get("work_role"))
+        work_roles = list(work_roles_set)
 
         for role in work_roles:
             if role not in role_stats:
