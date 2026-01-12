@@ -116,6 +116,53 @@ export default function SubmitPage() {
     const isError = submitMutation.isError || uploadMutation.isError;
     const error = submitMutation.error || uploadMutation.error;
 
+    // Show irrelevant content result
+    if (result && result.is_relevant === false) {
+        return (
+            <div className="max-w-3xl mx-auto py-8 space-y-6">
+                <div className="text-center space-y-2">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/10 mb-4">
+                        <AlertCircle className="h-8 w-8 text-amber-500" />
+                    </div>
+                    <h1 className="text-3xl font-bold">Content Not Relevant</h1>
+                    <p className="text-muted-foreground">
+                        This content doesn't appear to be related to cybersecurity or DCWF tasks.
+                    </p>
+                </div>
+
+                <Card className="border-2 border-amber-500/20">
+                    <CardContent className="py-6 space-y-4">
+                        <div className="text-center">
+                            <p className="text-sm text-muted-foreground mb-2">Relevance Score</p>
+                            <div className="text-2xl font-bold text-amber-500">
+                                {Math.round((result.relevance_score || 0) * 100)}%
+                            </div>
+                        </div>
+                        {result.relevance_reason && (
+                            <p className="text-sm text-center text-muted-foreground">
+                                {result.relevance_reason}
+                            </p>
+                        )}
+                        <Alert>
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertTitle>Not Stored</AlertTitle>
+                            <AlertDescription>
+                                This content was analyzed but not added to the knowledge base because it doesn't relate to cybersecurity workforce topics.
+                            </AlertDescription>
+                        </Alert>
+                    </CardContent>
+                </Card>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <Button onClick={resetForm} variant="outline" className="flex-1">
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Try Different Content
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     // Show results view if we have a result
     if (result && result.success && result.classification) {
         const cls = result.classification;
