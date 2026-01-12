@@ -55,13 +55,14 @@ export const fetchSkills = async (): Promise<SkillItem[]> => {
 };
 
 export const fetchResources = async (params: SearchParams & { page?: number; limit?: number }) => {
-    // Map job_role to role for the backend
+    // Map parameters for the backend
     const backendParams: Record<string, string | number | undefined> = {
         page: params.page,
         limit: params.limit,
+        query: params.query,
         role: params.job_role,  // Backend uses 'role' not 'job_role'
-        resource_type: undefined,
-        difficulty: undefined,
+        dcwf_task: params.dcwf_task,
+        classification: params.classification,
     };
 
     // Remove undefined values
