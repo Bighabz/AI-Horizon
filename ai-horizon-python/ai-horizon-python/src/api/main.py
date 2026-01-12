@@ -1032,24 +1032,34 @@ def search_local_evidence(query: str, filters: dict, limit: int = 20) -> list[di
 
         if filters.get("job_role"):
             role_match = False
-            work_roles = artifact.get("work_roles", []) or []
-            work_role = artifact.get("work_role") or ""
-            if work_role and filters["job_role"].lower() in work_role.lower():
-                role_match = True
-            for wr in work_roles:
-                if wr and filters["job_role"].lower() in wr.lower():
+            filter_role = str(filters["job_role"]).lower()
+
+            # Check single work_role field
+            work_role = artifact.get("work_role")
+            if work_role and isinstance(work_role, str):
+                if filter_role in work_role.lower():
                     role_match = True
-                    break
+
+            # Check work_roles list
+            work_roles = artifact.get("work_roles")
+            if work_roles and isinstance(work_roles, list):
+                for wr in work_roles:
+                    if wr and isinstance(wr, str) and filter_role in wr.lower():
+                        role_match = True
+                        break
+
             if not role_match:
                 continue
 
         if filters.get("ai_tool"):
             tool_match = False
-            ai_tools = artifact.get("ai_tools_mentioned", [])
-            for tool in ai_tools:
-                if filters["ai_tool"].lower() in tool.lower():
-                    tool_match = True
-                    break
+            filter_tool = str(filters["ai_tool"]).lower()
+            ai_tools = artifact.get("ai_tools_mentioned")
+            if ai_tools and isinstance(ai_tools, list):
+                for tool in ai_tools:
+                    if tool and isinstance(tool, str) and filter_tool in tool.lower():
+                        tool_match = True
+                        break
             if not tool_match:
                 continue
 
