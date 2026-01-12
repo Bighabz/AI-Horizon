@@ -1944,6 +1944,37 @@ async def cleanup_incomplete_records():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.delete("/api/admin/delete-artifact/{artifact_id}")
+async def delete_artifact_by_id(artifact_id: str):
+    """Delete a specific artifact by its artifact_id."""
+    try:
+        from src.api.supabase_client import get_supabase
+        client = get_supabase()
+
+        response = client.table("document_registry").delete().eq(
+            "artifact_id", artifact_id
+        ).execute()
+
+        deleted_count = len(response.data) if response.data else 0
+
+        if deleted_count == 0:
+            raise HTTPException(status_code=404, detail=f"Artifact {artifact_id} not found")
+
+        # Reload the evidence store
+        load_evidence_store()
+
+        return {
+            "success": True,
+            "deleted_artifact_id": artifact_id,
+            "message": f"Deleted artifact {artifact_id}"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Delete artifact error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================================
 # Main
 # ============================================================================
