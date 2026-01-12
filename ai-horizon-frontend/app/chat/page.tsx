@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useSearchParams } from 'next/navigation';
 import { sendChatMessage, getSessionId } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -108,6 +109,7 @@ function formatMessage(content: string): React.ReactNode {
 }
 
 export default function ChatPage() {
+    const searchParams = useSearchParams();
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -129,6 +131,7 @@ export default function ChatPage() {
         }
     ]);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [contextSent, setContextSent] = useState(false);
 
     // Initialize session
     useEffect(() => {
@@ -168,6 +171,18 @@ export default function ChatPage() {
             scrollRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, [messages]);
+
+    // Handle context from URL (e.g., from submit page)
+    useEffect(() => {
+        const context = searchParams.get('context');
+        if (context && !contextSent) {
+            setContextSent(true);
+            // Small delay to ensure component is ready
+            setTimeout(() => {
+                handleSend(context);
+            }, 500);
+        }
+    }, [searchParams, contextSent]);
 
     // Career-focused quick actions
     const QUICK_ACTIONS = [

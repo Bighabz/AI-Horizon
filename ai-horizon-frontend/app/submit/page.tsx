@@ -219,7 +219,14 @@ export default function SubmitPage() {
                         <RotateCcw className="mr-2 h-4 w-4" />
                         Submit Another
                     </Button>
-                    <Button onClick={() => router.push('/chat')} className="flex-1">
+                    <Button
+                        onClick={() => {
+                            // Build a context message about the submission
+                            const contextMsg = `I just submitted evidence that was classified as "${cls.classification}" with ${Math.round(cls.confidence * 100)}% confidence. The analysis found: ${cls.rationale?.slice(0, 200)}... Can you help me understand what this means for cybersecurity careers?`;
+                            router.push(`/chat?context=${encodeURIComponent(contextMsg)}`);
+                        }}
+                        className="flex-1"
+                    >
                         Discuss with AI Assistant
                         <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
