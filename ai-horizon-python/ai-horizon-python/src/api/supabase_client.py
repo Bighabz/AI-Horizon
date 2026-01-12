@@ -157,3 +157,61 @@ def delete_artifact(artifact_id: str) -> bool:
     except Exception as e:
         logger.error(f"Failed to delete artifact from Supabase: {e}")
         return False
+
+
+def check_url_duplicate(url: str) -> dict | None:
+    """Check if a URL already exists in Supabase. Returns the existing record if found."""
+    if not url:
+        return None
+
+    try:
+        client = get_supabase()
+
+        # Normalize URL for comparison (remove trailing slashes, www, etc.)
+        normalized = url.strip().rstrip('/').lower()
+        if normalized.startswith('https://www.'):
+            normalized = normalized.replace('https://www.', 'https://')
+        elif normalized.startswith('http://www.'):
+            normalized = normalized.replace('http://www.', 'http://')
+
+        # Check for exact match first
+        response = client.table("document_registry").select("*").eq("source_url", url).limit(1).execute()
+        if response.data:
+            logger.info(f"Found duplicate URL in Supabase: {url}")
+            return response.data[0]
+
+        # Also check normalized version
+        response = client.table("document_registry").select("*").ilike("source_url", f"%{normalized.split('://')[-1]}%").limit(1).execute()
+        if response.data:
+            # Verify it's actually a match (not just contains)
+            stored_url = response.data[0].get("source_url", "").strip().rstrip('/').lower()
+            if stored_url.startswith('https://www.'):
+                stored_url = stored_url.replace('https://www.', 'https://')
+            elif stored_url.startswith('http://www.'):
+                stored_url = stored_url.replace('http://www.', 'http://')
+
+            if normalized == stored_url or normalized.split('://')[-1] == stored_url.split('://')[-1]:
+                logger.info(f"Found duplicate URL (normalized) in Supabase: {url}")
+                return response.data[0]
+
+        return None
+    except Exception as e:
+        logger.error(f"Failed to check URL duplicate in Supabase: {e}")
+        return None
+
+
+def get_all_source_urls() -> set:
+    """Get all source URLs from Supabase for deduplication."""
+    try:
+        client = get_supabase()
+        response = client.table("document_registry").select("source_url").execute()
+        urls = set()
+        for row in response.data:
+            url = row.get("source_url")
+            if url:
+                urls.add(url.strip().rstrip('/').lower())
+        logger.info(f"Loaded {len(urls)} URLs from Supabase for deduplication")
+        return urls
+    except Exception as e:
+        logger.error(f"Failed to load URLs from Supabase: {e}")
+        return set()

@@ -31,11 +31,18 @@ export interface SubmitResponse {
     success: boolean;
     artifact_id?: string;
     is_duplicate: boolean;
+    is_relevant?: boolean;
+    relevance_score?: number;
+    relevance_reason?: string;
+    stored?: boolean;
     message: string;
     classification?: {
         classification: string;
         confidence: number;
         rationale: string;
+        is_relevant?: boolean;
+        relevance_score?: number;
+        relevance_reason?: string;
         dcwf_tasks: Array<{
             task_id: string;
             task_name: string;

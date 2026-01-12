@@ -38,7 +38,7 @@ from google import genai
 from google.genai import types
 
 # Supabase client for database storage
-from .supabase_client import load_artifacts, save_artifact, search_artifacts, get_stats as get_supabase_stats
+from .supabase_client import load_artifacts, save_artifact, search_artifacts, get_stats as get_supabase_stats, check_url_duplicate, get_all_source_urls
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -509,6 +509,10 @@ class SubmitArtifactResponse(BaseModel):
     success: bool
     artifact_id: Optional[str] = None
     is_duplicate: bool = False
+    is_relevant: bool = True
+    relevance_score: Optional[float] = None
+    relevance_reason: Optional[str] = None
+    stored: bool = True  # Whether the artifact was stored
     message: str
     classification: Optional[dict] = None
 
@@ -561,9 +565,25 @@ def normalize_url(url: str) -> str:
 
 
 def check_url_exists(url: str) -> Optional[dict]:
-    """Check if a URL already exists in the evidence store."""
+    """Check if a URL already exists in the evidence store or Supabase."""
     if not url:
         return None
+
+    # First check Supabase (persistent storage)
+    supabase_result = check_url_duplicate(url)
+    if supabase_result:
+        # Transform to expected format
+        return {
+            "artifact_id": f"artifact_{supabase_result['id'][:12]}" if supabase_result.get('id') else None,
+            "title": supabase_result.get("file_name"),
+            "source_url": supabase_result.get("source_url"),
+            "classification": supabase_result.get("classification"),
+            "confidence": supabase_result.get("confidence"),
+            "rationale": supabase_result.get("rationale"),
+            "stored_at": supabase_result.get("created_at"),
+        }
+
+    # Also check in-memory cache
     normalized = normalize_url(url)
     for artifact in evidence_store:
         stored_url = artifact.get("source_url")
@@ -662,19 +682,35 @@ Title: {title}
 Source Type: {source_type}
 Content: {content}
 
-## Classification Categories
+## IMPORTANT: First determine if this content is relevant to cybersecurity or DCWF tasks.
+Content is relevant if it discusses ANY of these topics:
+- Cybersecurity, information security, network security
+- AI/automation impact on security jobs or tasks
+- Threat detection, incident response, vulnerability management
+- Security operations, SOC, SIEM, threat intelligence
+- Penetration testing, ethical hacking, security engineering
+- Compliance, risk management, security governance
+- Any DCWF (DoD Cyber Workforce Framework) work roles or tasks
+
+If the content is NOT about cybersecurity/DCWF, set is_relevant to false.
+
+## Classification Categories (only if relevant)
 - **Replace**: AI will fully automate this task (>70% AI capability)
 - **Augment**: AI assists but humans remain essential (40-70% AI)
 - **Remain Human**: Must stay human due to ethics, legal, or accountability
 - **New Task**: AI enables new capabilities not in traditional DCWF
 
 ## Scoring Criteria
+- **Relevance** (0-1): How relevant is this to cybersecurity/DCWF? (< 0.3 = not relevant)
 - **Credibility** (0-1): Source reliability, author expertise, peer review status
 - **Impact** (0-1): Significance of the finding to workforce transformation
 - **Specificity** (0-1): How clearly it maps to specific DCWF tasks
 
 Respond with this exact JSON structure:
 {{
+    "is_relevant": true,
+    "relevance_score": 0.85,
+    "relevance_reason": "Brief explanation of why this is/isn't relevant to cybersecurity",
     "classification": "Replace|Augment|Remain Human|New Task",
     "confidence": 0.85,
     "credibility_score": 0.8,
@@ -696,6 +732,16 @@ Respond with this exact JSON structure:
     ],
     "ai_tools_mentioned": ["ChatGPT", "GitHub Copilot"],
     "evidence_strength": "strong|moderate|weak"
+}}
+
+If content is NOT relevant, return:
+{{
+    "is_relevant": false,
+    "relevance_score": 0.1,
+    "relevance_reason": "This content is about [topic], not cybersecurity or DCWF tasks",
+    "classification": null,
+    "confidence": 0,
+    "rationale": "Content not relevant to cybersecurity workforce analysis"
 }}
 """
 
@@ -1230,6 +1276,8 @@ async def submit_artifact(
                 success=False,
                 artifact_id=existing.get("artifact_id"),
                 is_duplicate=True,
+                is_relevant=True,  # Existing entries were relevant
+                stored=False,  # Not stored again
                 message=f"This URL was already submitted on {existing.get('stored_at', 'unknown date')}. Classification: {existing.get('classification', 'Unknown')}",
                 classification={
                     "classification": existing.get("classification"),
@@ -1271,11 +1319,13 @@ async def submit_artifact(
     if not content:
         raise HTTPException(status_code=400, detail="No content or URL provided")
     
-    # Check for duplicates
+    # Check for content duplicates (hash-based)
     if check_duplicate(content, str(request.url) if request.url else None):
         return SubmitArtifactResponse(
             success=False,
             is_duplicate=True,
+            is_relevant=True,  # Existing entries were relevant
+            stored=False,  # Not stored again
             message="This content has already been submitted and classified."
         )
     
@@ -1305,13 +1355,37 @@ async def submit_artifact(
     except Exception as e:
         logger.error(f"Classification error: {e}")
         classification = {
+            "is_relevant": True,  # Assume relevant if classification fails
+            "relevance_score": 0.5,
             "classification": "Augment",
             "confidence": 0.5,
             "rationale": "Auto-classification failed, defaulting to Augment",
             "error": str(e)
         }
-    
-    # Register for deduplication
+
+    # Check relevance - if not relevant to cybersecurity/DCWF, don't store
+    is_relevant = classification.get("is_relevant", True)
+    relevance_score = classification.get("relevance_score", 1.0)
+    relevance_reason = classification.get("relevance_reason", "")
+
+    # Threshold: relevance_score < 0.3 means not relevant enough
+    RELEVANCE_THRESHOLD = 0.3
+
+    if not is_relevant or relevance_score < RELEVANCE_THRESHOLD:
+        logger.info(f"Content not relevant (score: {relevance_score}): {relevance_reason}")
+        return SubmitArtifactResponse(
+            success=True,  # Classification succeeded, just not stored
+            artifact_id=None,
+            is_duplicate=False,
+            is_relevant=False,
+            relevance_score=relevance_score,
+            relevance_reason=relevance_reason or "This content doesn't appear to be related to cybersecurity or DCWF tasks.",
+            stored=False,
+            message=f"Content analyzed but not stored. {relevance_reason or 'This content does not appear to be related to cybersecurity or DCWF workforce tasks.'}",
+            classification=classification
+        )
+
+    # Register for deduplication (only for relevant content)
     register_artifact(content, str(request.url) if request.url else None)
 
     # Auto-detect resource type from source_type
@@ -1377,6 +1451,10 @@ async def submit_artifact(
         success=True,
         artifact_id=artifact_id,
         is_duplicate=False,
+        is_relevant=True,
+        relevance_score=relevance_score,
+        relevance_reason=relevance_reason,
+        stored=True,
         message=f"Artifact classified as '{classification.get('classification')}' with {classification.get('confidence', 0):.0%} confidence.",
         classification=classification,
     )
