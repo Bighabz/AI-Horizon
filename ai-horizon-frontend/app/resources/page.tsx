@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense, useCallback } from 'react';
+import React, { useState, Suspense, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchResources } from '@/lib/api';
 import { ResourceCard } from '@/components/cards/ResourceCard';
@@ -22,13 +22,24 @@ function ResourcesContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const page = parseInt(searchParams.get('page') || '1');
+
+    // Read role filter from URL query param (from SkillCard navigation)
+    const urlRole = searchParams.get('role') || 'All';
+
     const [searchQuery, setSearchQuery] = useState("");
     const [filters, setFilters] = useState<FilterState>({
         category: 'All',
-        role: 'All',
+        role: urlRole,
         taskId: 'All',
         classifications: []
     });
+
+    // Sync URL role param with filters when URL changes
+    useEffect(() => {
+        if (urlRole !== filters.role) {
+            setFilters(prev => ({ ...prev, role: urlRole }));
+        }
+    }, [urlRole]);
 
     // Get active filters for API call
     const roleFilter = filters.role !== 'All' ? filters.role : '';
@@ -91,8 +102,12 @@ function ResourcesContent() {
                 />
             </div>
 
-            {/* Filter Panel */}
-            <CascadeFilter onFilterChange={handleFilterChange} />
+            {/* Filter Panel - key forces re-mount when URL role changes */}
+            <CascadeFilter
+                key={`filter-${urlRole}`}
+                onFilterChange={handleFilterChange}
+                initialFilters={{ role: urlRole }}
+            />
 
             {isLoading ? (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
