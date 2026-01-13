@@ -720,11 +720,21 @@ If the content is NOT about cybersecurity/DCWF, set is_relevant to false.
 
 ## Submission Type Detection
 Determine if this content is EVIDENCE or a RESOURCE:
-- "evidence": Research, news, articles, or analysis about how AI impacts cybersecurity tasks/jobs
-- "resource": Learning materials like bootcamps, courses, tutorials, certifications, training programs, educational content
 
-Examples of EVIDENCE: Articles about AI replacing SOC analysts, research on GPT for threat detection, studies on automation in cybersecurity
-Examples of RESOURCES: Cybersecurity bootcamp landing pages, certification course descriptions, tutorial videos, training programs, educational platforms
+**EVIDENCE** (Social Proof / Research):
+- News articles, research papers, studies about AI's impact on cybersecurity jobs
+- Industry reports, expert opinions, workforce trend analysis
+- YouTube videos discussing AI trends, news, or research findings (NOT tutorials)
+- Content that PROVES or DEMONSTRATES how AI is changing the cybersecurity workforce
+
+**RESOURCE** (Educational / Learning Materials):
+- Bootcamps, courses, certifications, training programs
+- Tutorial videos, how-to guides, educational lessons
+- YouTube videos that TEACH skills (cybersecurity courses, tool tutorials, certification prep)
+- Platforms offering cybersecurity education or skill development
+
+Examples of EVIDENCE: "AI is replacing SOC analysts" article, research on GPT for threat detection, workforce layoff news, expert interviews about AI impact
+Examples of RESOURCES: Cybersecurity bootcamp landing page, CompTIA certification course, "How to use Splunk" tutorial, penetration testing course video
 
 ## Classification Categories (only if relevant)
 - **Replace**: AI will fully automate this task (>70% AI capability)

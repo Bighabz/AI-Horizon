@@ -22,6 +22,31 @@ interface Message {
     sources?: { title: string; url: string; relevance?: number }[];
 }
 
+// Safely format inline bold text without dangerouslySetInnerHTML
+function formatInlineBold(text: string): React.ReactNode {
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    const regex = /\*\*(.+?)\*\*/g;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+        // Add text before the match
+        if (match.index > lastIndex) {
+            parts.push(text.slice(lastIndex, match.index));
+        }
+        // Add the bold text
+        parts.push(<strong key={match.index}>{match[1]}</strong>);
+        lastIndex = regex.lastIndex;
+    }
+
+    // Add remaining text after last match
+    if (lastIndex < text.length) {
+        parts.push(text.slice(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
+}
+
 // Simple markdown-like formatting for chat messages
 function formatMessage(content: string): React.ReactNode {
     // Split into sections by headers
@@ -92,10 +117,9 @@ function formatMessage(content: string): React.ReactNode {
         // Regular paragraph
         else if (trimmed.length > 0) {
             flushList();
-            // Handle inline bold
-            const formatted = trimmed.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Handle inline bold safely (no dangerouslySetInnerHTML)
             elements.push(
-                <p key={i} className="my-1.5" dangerouslySetInnerHTML={{ __html: formatted }} />
+                <p key={i} className="my-1.5">{formatInlineBold(trimmed)}</p>
             );
         }
         // Empty line
