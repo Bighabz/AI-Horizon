@@ -41,6 +41,7 @@ export default function SkillsPage() {
       classifications: { replace: 0, augment: 0, remain_human: 0, new_task: 0 },
       resource_types: {},
       difficulty_levels: {},
+      avg_confidence: 0.7,
       last_updated: ''
     }
   });
@@ -124,8 +125,8 @@ export default function SkillsPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">85%</div>
-            <p className="text-xs text-muted-foreground">Across all models</p>
+            <div className="text-2xl font-bold">{Math.round((stats?.avg_confidence || 0.7) * 100)}%</div>
+            <p className="text-xs text-muted-foreground">Across all classifications</p>
           </CardContent>
         </Card>
       </div>
