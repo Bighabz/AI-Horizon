@@ -9,8 +9,9 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
     { href: '/', label: 'Home' },
-    { href: '/skills', label: 'Skills Matrix' },
-    { href: '/resources', label: 'Evidence Library' },
+    { href: '/skills', label: 'Work Roles' },
+    { href: '/resources?submission_type=evidence', label: 'Evidence Library' },
+    { href: '/resources?submission_type=resource', label: 'Learning Library' },
     { href: '/chat', label: 'AI Assistant' },
 ];
 
@@ -55,7 +56,7 @@ export function Navbar() {
                     <Link href="/submit">
                         <Button className="cursor-pointer">
                             <Send className="mr-2 h-4 w-4" />
-                            Submit Evidence
+                            Submit
                         </Button>
                     </Link>
                 </div>
@@ -93,7 +94,7 @@ export function Navbar() {
                                 <Link href="/submit" className="w-full">
                                     <Button className="w-full cursor-pointer">
                                         <Send className="mr-2 h-4 w-4" />
-                                        Submit Evidence
+                                        Submit
                                     </Button>
                                 </Link>
                             </div>

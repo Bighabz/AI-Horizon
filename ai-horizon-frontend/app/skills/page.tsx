@@ -135,9 +135,9 @@ export default function SkillsPage() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Skills Matrix</h2>
+            <h2 className="text-3xl font-bold tracking-tight">Work Roles</h2>
             <p className="text-muted-foreground">
-              Explore how AI is impacting specific cybersecurity tasks and roles.
+              Explore how AI is impacting cybersecurity work roles and tasks.
             </p>
           </div>
           <SearchBar
