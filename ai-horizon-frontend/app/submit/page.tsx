@@ -406,9 +406,12 @@ export default function SubmitPage() {
                             <TabsContent value="url" className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="url">Resource URL</Label>
+                                    <p className="text-xs text-muted-foreground">
+                                        Articles, YouTube videos, and web pages accepted
+                                    </p>
                                     <Input
                                         id="url"
-                                        placeholder="https://example.com/article..."
+                                        placeholder="https://example.com/article or YouTube link..."
                                         value={url}
                                         onChange={(e) => setUrl(e.target.value)}
                                         disabled={isPending}

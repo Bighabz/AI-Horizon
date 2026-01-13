@@ -54,7 +54,7 @@ export const fetchSkills = async (): Promise<SkillItem[]> => {
     return data.skills;  // Unwrap the skills array from response
 };
 
-export const fetchResources = async (params: SearchParams & { page?: number; limit?: number }) => {
+export const fetchResources = async (params: SearchParams & { page?: number; limit?: number; submission_type?: string }) => {
     // Map parameters for the backend
     const backendParams: Record<string, string | number | undefined> = {
         page: params.page,
@@ -63,6 +63,7 @@ export const fetchResources = async (params: SearchParams & { page?: number; lim
         role: params.job_role,  // Backend uses 'role' not 'job_role'
         dcwf_task: params.dcwf_task,
         classification: params.classification,
+        submission_type: params.submission_type,
     };
 
     // Remove undefined values
