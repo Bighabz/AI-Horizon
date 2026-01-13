@@ -2225,6 +2225,22 @@ async def cleanup_untitled_artifacts(_: bool = Depends(verify_admin_key)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/admin/reload")
+async def reload_evidence_store(_: bool = Depends(verify_admin_key)):
+    """Reload evidence store from Supabase.
+    Requires X-Admin-Key header."""
+    try:
+        load_evidence_store()
+        return {
+            "success": True,
+            "count": len(evidence_store),
+            "message": f"Reloaded {len(evidence_store)} artifacts from Supabase"
+        }
+    except Exception as e:
+        logger.error(f"Reload error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ============================================================================
 # Main
 # ============================================================================
