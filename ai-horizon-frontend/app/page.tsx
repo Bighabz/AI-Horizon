@@ -47,7 +47,7 @@ export default function HomePage() {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                         <Link href="/skills">
                             <Button size="lg" className="cursor-pointer w-full sm:w-auto">
-                                Explore Skills Matrix
+                                Explore Work Roles
                                 <ArrowRight className="ml-2 h-5 w-5" />
                             </Button>
                         </Link>
@@ -172,7 +172,7 @@ export default function HomePage() {
                     </p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <Link href="/skills" className="group">
                         <Card className="h-full hover:border-primary/50 transition-all cursor-pointer group-hover:shadow-lg">
                             <CardHeader>
@@ -180,20 +180,20 @@ export default function HomePage() {
                                     <Brain className="h-6 w-6 text-primary" />
                                 </div>
                                 <CardTitle className="flex items-center justify-between">
-                                    Skills Matrix
+                                    Work Roles
                                     <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <CardDescription className="text-base">
-                                    Explore DCWF work roles and see how AI impacts each one. Filter by category,
+                                    Explore 52 DCWF work roles and see how AI impacts each one. Filter by category,
                                     role, and classification type.
                                 </CardDescription>
                             </CardContent>
                         </Card>
                     </Link>
 
-                    <Link href="/resources" className="group">
+                    <Link href="/resources?submission_type=evidence" className="group">
                         <Card className="h-full hover:border-primary/50 transition-all cursor-pointer group-hover:shadow-lg">
                             <CardHeader>
                                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
@@ -208,6 +208,26 @@ export default function HomePage() {
                                 <CardDescription className="text-base">
                                     Browse analyzed research papers, articles, and reports that inform our
                                     classifications.
+                                </CardDescription>
+                            </CardContent>
+                        </Card>
+                    </Link>
+
+                    <Link href="/resources?submission_type=resource" className="group">
+                        <Card className="h-full hover:border-primary/50 transition-all cursor-pointer group-hover:shadow-lg">
+                            <CardHeader>
+                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                                    <BookOpen className="h-6 w-6 text-primary" />
+                                </div>
+                                <CardTitle className="flex items-center justify-between">
+                                    Learning Library
+                                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <CardDescription className="text-base">
+                                    Discover courses, bootcamps, certifications and tutorials to build AI-ready
+                                    cybersecurity skills.
                                 </CardDescription>
                             </CardContent>
                         </Card>
@@ -249,7 +269,7 @@ export default function HomePage() {
                         </p>
                         <Link href="/submit">
                             <Button size="lg" className="cursor-pointer">
-                                Submit Evidence
+                                Submit Content
                                 <ArrowRight className="ml-2 h-5 w-5" />
                             </Button>
                         </Link>
