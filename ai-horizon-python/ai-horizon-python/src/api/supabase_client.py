@@ -60,6 +60,7 @@ def load_artifacts() -> list[dict]:
                 "key_findings": row.get("key_findings", []),
                 "work_role": work_roles[0] if work_roles else "Cyber Defense Analyst",
                 "work_roles": work_roles,
+                "submission_type": row.get("submission_type", "evidence"),  # Default old records to evidence
                 "difficulty": "Advanced" if row.get("confidence", 0) > 0.7 else "Beginner",
                 "is_free": True,
                 "stored_at": row.get("created_at"),
@@ -96,6 +97,7 @@ def save_artifact(artifact_data: dict) -> bool:
             "dcwf_tasks": artifact_data.get("dcwf_tasks", []),
             "key_findings": artifact_data.get("key_findings", []),
             "work_roles": work_roles,  # Save work_roles to database
+            "submission_type": artifact_data.get("submission_type", "evidence"),  # evidence or resource
             "scores": artifact_data.get("scores", {}),
             "content_length": len(artifact_data.get("content", "")),
             "extraction_method": artifact_data.get("extraction_method", "trafilatura"),
