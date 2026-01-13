@@ -474,7 +474,7 @@ export default function SubmitPage() {
 
                             <Button type="submit" className="w-full" disabled={isPending}>
                                 {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {activeTab === 'file' ? 'Upload & Classify' : 'Classify & Analyze'}
+                                {activeTab === 'file' ? 'Upload & Analyze' : 'Analyze'}
                             </Button>
                         </form>
                     </Tabs>
