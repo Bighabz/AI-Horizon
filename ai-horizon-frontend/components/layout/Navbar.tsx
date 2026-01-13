@@ -12,7 +12,7 @@ const NAV_ITEMS = [
     { href: '/', label: 'Home', match: { path: '/', param: null } },
     { href: '/skills', label: 'Work Roles', match: { path: '/skills', param: null } },
     { href: '/resources?submission_type=evidence', label: 'Evidence Library', match: { path: '/resources', param: 'evidence' } },
-    { href: '/resources?submission_type=resource', label: 'Learning Library', match: { path: '/resources', param: 'resource' } },
+    { href: '/resources?submission_type=resource', label: 'Learning Resources', match: { path: '/resources', param: 'resource' } },
     { href: '/chat', label: 'AI Assistant', match: { path: '/chat', param: null } },
 ];
 
