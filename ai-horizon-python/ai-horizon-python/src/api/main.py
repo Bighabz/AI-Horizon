@@ -1360,7 +1360,10 @@ async def submit_artifact(
                 logger.info(f"Extracted YouTube transcript: {len(content)} chars")
             except Exception as e:
                 logger.error(f"YouTube extraction failed: {e}")
-                raise HTTPException(status_code=400, detail=f"Could not extract YouTube transcript: {e}")
+                error_msg = str(e).lower()
+                if "no transcript" in error_msg or "disabled" in error_msg or "not available" in error_msg:
+                    raise HTTPException(status_code=400, detail="This YouTube video doesn't have captions available. Try a different video or use the Text tab to paste content manually.")
+                raise HTTPException(status_code=400, detail="Could not extract YouTube transcript. The video may not have captions. Try using the Text tab instead.")
         else:
             # Use trafilatura for web extraction
             try:
@@ -1370,7 +1373,7 @@ async def submit_artifact(
                 logger.info(f"Extracted web content: {len(content)} chars")
             except Exception as e:
                 logger.error(f"Web extraction failed: {e}")
-                raise HTTPException(status_code=400, detail=f"Could not extract web content: {e}")
+                raise HTTPException(status_code=400, detail="Could not extract content from this URL. The site may block automated access (Simplilearn, LinkedIn, etc.). Use the Text tab to copy/paste the content instead.")
     
     if not content:
         raise HTTPException(status_code=400, detail="No content or URL provided")
