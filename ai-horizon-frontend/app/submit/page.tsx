@@ -45,6 +45,20 @@ const RESOURCE_EXAMPLES = [
     { icon: BookOpen, text: "Educational platforms & learning paths", color: "text-cyan-500" },
 ];
 
+// Helper to extract error message from axios errors
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getErrorMessage = (error: any): string => {
+    // Check for axios error with response data
+    if (error?.response?.data?.detail) {
+        return error.response.data.detail;
+    }
+    // Check for standard Error
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return "Failed to submit content. Please try again.";
+};
+
 export default function SubmitPage() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState("url");
@@ -511,7 +525,7 @@ export default function SubmitPage() {
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertTitle>Error</AlertTitle>
                                     <AlertDescription>
-                                        {error instanceof Error ? error.message : "Failed to submit content."}
+                                        {getErrorMessage(error)}
                                     </AlertDescription>
                                 </Alert>
                             )}
