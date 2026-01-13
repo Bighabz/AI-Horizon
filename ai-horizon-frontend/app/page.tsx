@@ -77,7 +77,7 @@ export default function HomePage() {
                             <div className="text-3xl md:text-4xl font-bold text-primary">
                                 {stats?.total_resources || 0}
                             </div>
-                            <p className="text-sm text-muted-foreground mt-1">Evidence Collected</p>
+                            <p className="text-sm text-muted-foreground mt-1">Resources & Evidence</p>
                         </CardContent>
                     </Card>
                     <Card className="bg-card/50 border-primary/10">
@@ -220,7 +220,7 @@ export default function HomePage() {
                                     <BookOpen className="h-6 w-6 text-primary" />
                                 </div>
                                 <CardTitle className="flex items-center justify-between">
-                                    Learning Library
+                                    Learning Resources
                                     <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                                 </CardTitle>
                             </CardHeader>
