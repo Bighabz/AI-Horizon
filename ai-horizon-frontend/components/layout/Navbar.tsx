@@ -1,22 +1,39 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Menu, Send } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { Suspense } from 'react';
 
 const NAV_ITEMS = [
-    { href: '/', label: 'Home' },
-    { href: '/skills', label: 'Work Roles' },
-    { href: '/resources?submission_type=evidence', label: 'Evidence Library' },
-    { href: '/resources?submission_type=resource', label: 'Learning Library' },
-    { href: '/chat', label: 'AI Assistant' },
+    { href: '/', label: 'Home', match: { path: '/', param: null } },
+    { href: '/skills', label: 'Work Roles', match: { path: '/skills', param: null } },
+    { href: '/resources?submission_type=evidence', label: 'Evidence Library', match: { path: '/resources', param: 'evidence' } },
+    { href: '/resources?submission_type=resource', label: 'Learning Library', match: { path: '/resources', param: 'resource' } },
+    { href: '/chat', label: 'AI Assistant', match: { path: '/chat', param: null } },
 ];
 
-export function Navbar() {
+function NavbarContent() {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const submissionType = searchParams.get('submission_type');
+
+    const isActiveLink = (item: typeof NAV_ITEMS[0]) => {
+        // Exact path match for home
+        if (item.match.path === '/' && pathname === '/') return true;
+        if (item.match.path === '/' && pathname !== '/') return false;
+
+        // For resources pages, check both path and query param
+        if (item.match.path === '/resources' && pathname === '/resources') {
+            return item.match.param === submissionType;
+        }
+
+        // For other pages, just check path
+        return pathname === item.match.path || pathname.startsWith(item.match.path + '/');
+    };
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -31,8 +48,7 @@ export function Navbar() {
                 {/* Desktop Navigation Tabs */}
                 <nav className="hidden md:flex items-center space-x-1">
                     {NAV_ITEMS.map((item) => {
-                        const isActive = pathname === item.href ||
-                            (item.href !== '/' && pathname.startsWith(item.href));
+                        const isActive = isActiveLink(item);
                         return (
                             <Link
                                 key={item.href}
@@ -74,7 +90,7 @@ export function Navbar() {
                             <div className="flex flex-col space-y-4 mt-8">
                                 <Link href="/" className="font-bold text-xl mb-4">AI Horizon</Link>
                                 {NAV_ITEMS.map((item) => {
-                                    const isActive = pathname === item.href;
+                                    const isActive = isActiveLink(item);
                                     return (
                                         <Link
                                             key={item.href}
@@ -103,5 +119,15 @@ export function Navbar() {
                 </div>
             </div>
         </header>
+    );
+}
+
+export function Navbar() {
+    return (
+        <Suspense fallback={
+            <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur h-16" />
+        }>
+            <NavbarContent />
+        </Suspense>
     );
 }
