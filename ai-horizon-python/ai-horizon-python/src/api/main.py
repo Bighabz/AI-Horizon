@@ -28,7 +28,7 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(env_path, override=True)
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -54,6 +54,22 @@ class RateLimitError(Exception):
 DCWF_STORE_NAME = os.getenv("DCWF_STORE_NAME")
 ARTIFACTS_STORE_NAME = os.getenv("ARTIFACTS_STORE_NAME")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")  # Required for admin endpoints
+
+
+async def verify_admin_key(x_admin_key: str = Header(None, alias="X-Admin-Key")):
+    """Dependency to verify admin API key for protected endpoints."""
+    if not ADMIN_API_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="Admin endpoints are disabled. Set ADMIN_API_KEY in environment."
+        )
+    if not x_admin_key or x_admin_key != ADMIN_API_KEY:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or missing admin API key. Provide X-Admin-Key header."
+        )
+    return True
 
 # API Key rotation support - load multiple keys
 API_KEYS = []
@@ -189,13 +205,21 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS for frontend
+# CORS for frontend - configurable via environment
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+# Add Vercel preview URLs pattern support
+ALLOW_ORIGIN_REGEX = os.getenv("ALLOW_ORIGIN_REGEX", r"https://.*\.vercel\.app")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict to your domain
+    allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=ALLOW_ORIGIN_REGEX,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "X-Admin-Key", "Authorization"],
 )
 
 # In-memory session storage (use Redis in production)
@@ -694,6 +718,14 @@ Content is relevant if it discusses ANY of these topics:
 
 If the content is NOT about cybersecurity/DCWF, set is_relevant to false.
 
+## Submission Type Detection
+Determine if this content is EVIDENCE or a RESOURCE:
+- "evidence": Research, news, articles, or analysis about how AI impacts cybersecurity tasks/jobs
+- "resource": Learning materials like bootcamps, courses, tutorials, certifications, training programs, educational content
+
+Examples of EVIDENCE: Articles about AI replacing SOC analysts, research on GPT for threat detection, studies on automation in cybersecurity
+Examples of RESOURCES: Cybersecurity bootcamp landing pages, certification course descriptions, tutorial videos, training programs, educational platforms
+
 ## Classification Categories (only if relevant)
 - **Replace**: AI will fully automate this task (>70% AI capability)
 - **Augment**: AI assists but humans remain essential (40-70% AI)
@@ -711,6 +743,7 @@ Respond with this exact JSON structure:
     "is_relevant": true,
     "relevance_score": 0.85,
     "relevance_reason": "Brief explanation of why this is/isn't relevant to cybersecurity",
+    "submission_type": "evidence|resource",
     "classification": "Replace|Augment|Remain Human|New Task",
     "confidence": 0.85,
     "credibility_score": 0.8,
@@ -739,6 +772,7 @@ If content is NOT relevant, return:
     "is_relevant": false,
     "relevance_score": 0.1,
     "relevance_reason": "This content is about [topic], not cybersecurity or DCWF tasks",
+    "submission_type": "evidence",
     "classification": null,
     "confidence": 0,
     "rationale": "Content not relevant to cybersecurity workforce analysis"
@@ -1439,6 +1473,7 @@ async def submit_artifact(
         "difficulty": detected_difficulty.value if detected_difficulty else "Beginner",
         "is_free": request.is_free,
         "work_role": request.work_role or (classification.get("work_roles", [None])[0] if classification.get("work_roles") else None),
+        "submission_type": classification.get("submission_type", "evidence"),
         "classification": classification.get("classification"),
         "confidence": classification.get("confidence"),
         "rationale": classification.get("rationale"),
@@ -1620,6 +1655,7 @@ async def upload_file(
         "difficulty": detected_difficulty.value,
         "is_free": True,  # Uploaded files are considered free
         "work_role": classification.get("work_roles", [None])[0] if classification.get("work_roles") else None,
+        "submission_type": classification.get("submission_type", "evidence"),
         "classification": classification.get("classification"),
         "confidence": classification.get("confidence"),
         "rationale": classification.get("rationale"),
@@ -1716,6 +1752,7 @@ async def get_artifact_detail(artifact_id: str):
                 "is_free": artifact.get("is_free", True),
                 "work_role": artifact.get("work_role"),
                 "work_roles": artifact.get("work_roles", []),
+                "submission_type": artifact.get("submission_type", "evidence"),
                 "classification": artifact.get("classification", "Augment"),
                 "confidence": artifact.get("confidence", 0.7),
                 "rationale": artifact.get("rationale", ""),
@@ -1819,6 +1856,8 @@ async def get_stats():
     free_count = 0
     resource_types = {}
     difficulty_counts = {"Beginner": 0, "Intermediate": 0, "Advanced": 0, "Expert": 0}
+    confidence_sum = 0.0
+    confidence_count = 0
 
     for artifact in evidence_store:
         classification = (artifact.get("classification") or "").lower().replace(" ", "_")
@@ -1835,6 +1874,15 @@ async def get_stats():
         if diff in difficulty_counts:
             difficulty_counts[diff] += 1
 
+        # Track confidence for average calculation
+        confidence = artifact.get("confidence")
+        if confidence is not None and isinstance(confidence, (int, float)):
+            confidence_sum += float(confidence)
+            confidence_count += 1
+
+    # Calculate average confidence (default to 0.7 if no data)
+    avg_confidence = confidence_sum / confidence_count if confidence_count > 0 else 0.7
+
     return {
         "total_tasks": 1350,  # From DCWF data
         "total_resources": len(evidence_store),
@@ -1843,6 +1891,7 @@ async def get_stats():
         "classifications": classification_counts,
         "resource_types": resource_types,
         "difficulty_levels": difficulty_counts,
+        "avg_confidence": round(avg_confidence, 2),
         "last_updated": datetime.now().isoformat(),
     }
 
@@ -1855,6 +1904,7 @@ async def list_resources(
     is_free: Optional[bool] = None,
     dcwf_task: Optional[str] = None,
     classification: Optional[str] = None,
+    submission_type: Optional[str] = None,
     query: Optional[str] = None,
     page: int = 1,
     limit: int = 20,
@@ -1870,6 +1920,7 @@ async def list_resources(
         is_free: Filter by free/premium
         dcwf_task: Filter by DCWF task ID
         classification: Filter by classification (Replace, Augment, Remain Human, New Task)
+        submission_type: Filter by submission type (evidence or resource)
         query: Text search in title and rationale
         page: Page number (1-indexed)
         limit: Items per page (default 20, max 100)
@@ -1911,6 +1962,12 @@ async def list_resources(
             if classification.lower() != artifact_cls.lower():
                 continue
 
+        # Submission type filter (evidence vs resource)
+        if submission_type:
+            artifact_submission_type = artifact.get("submission_type", "evidence")
+            if submission_type.lower() != artifact_submission_type.lower():
+                continue
+
         # Text search in title and rationale
         if query:
             title = (artifact.get("title") or "").lower()
@@ -1928,6 +1985,7 @@ async def list_resources(
             "is_free": artifact.get("is_free", True),
             "work_role": artifact.get("work_role"),
             "work_roles": artifact.get("work_roles", []),
+            "submission_type": artifact.get("submission_type", "evidence"),
             "classification": artifact.get("classification"),
             "confidence": artifact.get("confidence"),
             "rationale": (artifact.get("rationale") or "")[:200],
@@ -1981,11 +2039,21 @@ async def list_skills():
                     "name": role,
                     "total_resources": 0,
                     "free_resources": 0,
+                    "evidence_count": 0,
+                    "resource_count": 0,
                     "classifications": {"Replace": 0, "Augment": 0, "Remain Human": 0, "New Task": 0},
                 }
             role_stats[role]["total_resources"] += 1
             if artifact.get("is_free", True):
                 role_stats[role]["free_resources"] += 1
+
+            # Track evidence vs resource counts
+            submission_type = artifact.get("submission_type", "evidence")
+            if submission_type == "resource":
+                role_stats[role]["resource_count"] += 1
+            else:
+                role_stats[role]["evidence_count"] += 1
+
             classification = artifact.get("classification", "Augment")
             if classification in role_stats[role]["classifications"]:
                 role_stats[role]["classifications"][classification] += 1
@@ -2026,6 +2094,8 @@ async def list_skills():
             "priority": priority,
             "total_resources": stats["total_resources"],
             "free_resources": stats["free_resources"],
+            "evidence_count": stats["evidence_count"],
+            "resource_count": stats["resource_count"],
             "classifications": stats["classifications"],
             "slug": role_name.lower().replace(" ", "-").replace("/", "-"),
         })
@@ -2041,10 +2111,11 @@ async def list_skills():
 # ============================================================================
 
 @app.delete("/api/admin/cleanup-incomplete")
-async def cleanup_incomplete_records():
+async def cleanup_incomplete_records(_: bool = Depends(verify_admin_key)):
     """
     Delete records from Supabase that have no artifact_id or source_url.
     These are incomplete submissions that clutter the database.
+    Requires X-Admin-Key header.
     """
     try:
         from src.api.supabase_client import get_supabase
@@ -2071,8 +2142,9 @@ async def cleanup_incomplete_records():
 
 
 @app.delete("/api/admin/delete-artifact/{artifact_id}")
-async def delete_artifact_by_id(artifact_id: str):
-    """Delete a specific artifact by its artifact_id (format: artifact_XXXX or raw UUID)."""
+async def delete_artifact_by_id(artifact_id: str, _: bool = Depends(verify_admin_key)):
+    """Delete a specific artifact by its artifact_id (format: artifact_XXXX or raw UUID).
+    Requires X-Admin-Key header."""
     try:
         from src.api.supabase_client import get_supabase
         client = get_supabase()
@@ -2119,8 +2191,9 @@ async def delete_artifact_by_id(artifact_id: str):
 
 
 @app.delete("/api/admin/cleanup-untitled")
-async def cleanup_untitled_artifacts():
-    """Delete all artifacts with 'Untitled' as their title."""
+async def cleanup_untitled_artifacts(_: bool = Depends(verify_admin_key)):
+    """Delete all artifacts with 'Untitled' as their title.
+    Requires X-Admin-Key header."""
     try:
         from src.api.supabase_client import get_supabase
         client = get_supabase()

@@ -25,6 +25,7 @@ export interface Resource {
     is_free: boolean;
     work_roles: string[];
     work_role?: string | null;
+    submission_type?: "evidence" | "resource";
 }
 
 export interface SubmitResponse {
@@ -73,6 +74,7 @@ export interface StatsResponse {
     };
     resource_types: Record<string, number>;
     difficulty_levels: Record<string, number>;
+    avg_confidence: number;
     last_updated: string;
 }
 
@@ -89,6 +91,8 @@ export interface SkillItem {
     priority: string;
     total_resources: number;
     free_resources: number;
+    evidence_count: number;
+    resource_count: number;
     classifications: {
         Replace: number;
         Augment: number;
@@ -110,6 +114,7 @@ export interface EvidenceDetail {
     is_free: boolean;
     work_role: string | null;
     work_roles: string[];
+    submission_type?: "evidence" | "resource";
     classification: string;
     confidence: number;
     rationale: string;

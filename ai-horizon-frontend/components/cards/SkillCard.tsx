@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { PriorityBadge } from "@/components/badges/StatusBadges";
 import { ClassificationBadge } from "@/components/badges/ClassificationBadge";
 import { SkillItem } from "@/lib/types";
-import { Users, FileText, ArrowRight } from "lucide-react";
+import { Users, FileText, ArrowRight, BookOpen } from "lucide-react";
 import { useRouter } from 'next/navigation';
 
 interface SkillCardProps {
@@ -35,7 +35,11 @@ export function SkillCard({ skill }: SkillCardProps) {
     const confidence = getConfidence(skill.classifications);
 
     const handleViewEvidence = () => {
-        router.push(`/resources?role=${encodeURIComponent(skill.name)}`);
+        router.push(`/resources?role=${encodeURIComponent(skill.name)}&submission_type=evidence`);
+    };
+
+    const handleViewResources = () => {
+        router.push(`/resources?role=${encodeURIComponent(skill.name)}&submission_type=resource`);
     };
 
     return (
@@ -74,17 +78,32 @@ export function SkillCard({ skill }: SkillCardProps) {
                     <div className="text-[10px] text-center text-muted-foreground mt-1">
                         {Math.round(confidence * 100)}% Confidence
                     </div>
-                    <Button
-                        variant="secondary"
-                        className="w-full mt-2"
-                        onClick={(e) => {
-                            e.stopPropagation(); // Prevent card click from also firing
-                            handleViewEvidence();
-                        }}
-                    >
-                        View Evidence ({skill.total_resources})
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2 mt-2">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            className="flex-1"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewEvidence();
+                            }}
+                        >
+                            <FileText className="mr-1 h-3 w-3" />
+                            Evidence ({skill.evidence_count || 0})
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewResources();
+                            }}
+                        >
+                            <BookOpen className="mr-1 h-3 w-3" />
+                            Resources ({skill.resource_count || 0})
+                        </Button>
+                    </div>
                 </div>
             </CardContent>
         </Card>

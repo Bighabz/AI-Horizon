@@ -25,6 +25,8 @@ function ResourcesContent() {
 
     // Read role filter from URL query param (from SkillCard navigation)
     const urlRole = searchParams.get('role') || 'All';
+    // Read submission_type filter from URL (evidence vs resource)
+    const urlSubmissionType = searchParams.get('submission_type') || '';
 
     const [searchQuery, setSearchQuery] = useState("");
     const [filters, setFilters] = useState<FilterState>({
@@ -36,9 +38,13 @@ function ResourcesContent() {
 
     // Sync URL role param with filters when URL changes
     useEffect(() => {
-        if (urlRole !== filters.role) {
-            setFilters(prev => ({ ...prev, role: urlRole }));
-        }
+        setFilters(prev => {
+            // Only update if different to avoid unnecessary re-renders
+            if (urlRole !== prev.role) {
+                return { ...prev, role: urlRole };
+            }
+            return prev;
+        });
     }, [urlRole]);
 
     // Get active filters for API call
@@ -51,7 +57,7 @@ function ResourcesContent() {
     }, []);
 
     const { data, isLoading } = useQuery({
-        queryKey: ['resources', page, searchQuery, roleFilter, taskFilter, classificationFilter],
+        queryKey: ['resources', page, searchQuery, roleFilter, taskFilter, classificationFilter, urlSubmissionType],
         queryFn: () => fetchResources({
             page,
             limit: 20,
@@ -59,6 +65,7 @@ function ResourcesContent() {
             job_role: roleFilter || undefined,
             dcwf_task: taskFilter || undefined,
             classification: classificationFilter || undefined,
+            submission_type: urlSubmissionType || undefined,
         }),
         placeholderData: (prev) => prev,
     });
@@ -75,22 +82,31 @@ function ResourcesContent() {
     };
 
     // Check if any filters are active
-    const hasActiveFilters = roleFilter || taskFilter || classificationFilter;
+    const hasActiveFilters = roleFilter || taskFilter || classificationFilter || urlSubmissionType;
 
     // Build filter description
     const getFilterDescription = () => {
         const parts: string[] = [];
+        if (urlSubmissionType === 'evidence') parts.push('Type: Evidence');
+        if (urlSubmissionType === 'resource') parts.push('Type: Learning Resources');
         if (roleFilter) parts.push(`Role: ${roleFilter}`);
         if (taskFilter) parts.push(`Task: ${taskFilter}`);
         if (classificationFilter) parts.push(`Classification: ${classificationFilter}`);
         return parts.length > 0 ? parts.join(' • ') : 'Browse analyzed artifacts including videos, courses, and articles.';
     };
 
+    // Get page title based on submission_type
+    const getPageTitle = () => {
+        if (urlSubmissionType === 'evidence') return 'Evidence Library';
+        if (urlSubmissionType === 'resource') return 'Learning Resources';
+        return 'Evidence Library';
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Evidence Library</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">{getPageTitle()}</h2>
                     <p className="text-muted-foreground">
                         {getFilterDescription()}
                     </p>
