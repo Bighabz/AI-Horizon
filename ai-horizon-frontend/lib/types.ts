@@ -44,6 +44,7 @@ export interface SubmitResponse {
         is_relevant?: boolean;
         relevance_score?: number;
         relevance_reason?: string;
+        submission_type?: "evidence" | "resource";
         dcwf_tasks: Array<{
             task_id: string;
             task_name: string;
