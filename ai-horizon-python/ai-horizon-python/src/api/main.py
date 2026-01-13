@@ -209,6 +209,8 @@ app = FastAPI(
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "https://www.aihorizonproject.com",
+    "https://aihorizonproject.com",
 ]
 # Add Vercel preview URLs pattern support
 ALLOW_ORIGIN_REGEX = os.getenv("ALLOW_ORIGIN_REGEX", r"https://.*\.vercel\.app")
