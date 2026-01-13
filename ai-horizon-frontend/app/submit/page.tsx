@@ -9,7 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from 'next/navigation';
-import { Loader2, AlertCircle, UploadCloud, FileType, CheckCircle2, Brain, Target, Lightbulb, ArrowRight, RotateCcw } from 'lucide-react';
+import {
+    Loader2, AlertCircle, UploadCloud, FileType, CheckCircle2, Brain, Target,
+    Lightbulb, ArrowRight, RotateCcw, Youtube, Newspaper, BookOpen, GraduationCap,
+    TrendingUp, Award, Play, FileText, Globe, Sparkles
+} from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSessionId } from '@/lib/api';
@@ -24,6 +28,21 @@ const LOADING_MESSAGES = [
     "Mapping to DCWF framework...",
     "Evaluating AI impact...",
     "Generating classification..."
+];
+
+// Example content for each category
+const EVIDENCE_EXAMPLES = [
+    { icon: Youtube, text: "YouTube videos discussing AI trends in cybersecurity", color: "text-red-500" },
+    { icon: Newspaper, text: "News articles about AI replacing security jobs", color: "text-blue-500" },
+    { icon: TrendingUp, text: "Research papers on GPT for threat detection", color: "text-green-500" },
+    { icon: Globe, text: "Industry reports on workforce transformation", color: "text-purple-500" },
+];
+
+const RESOURCE_EXAMPLES = [
+    { icon: Youtube, text: "YouTube tutorials & certification prep videos", color: "text-red-500" },
+    { icon: GraduationCap, text: "Online courses & bootcamp programs", color: "text-amber-500" },
+    { icon: Award, text: "Certification training (CompTIA, CISSP, etc.)", color: "text-emerald-500" },
+    { icon: BookOpen, text: "Educational platforms & learning paths", color: "text-cyan-500" },
 ];
 
 export default function SubmitPage() {
@@ -218,6 +237,8 @@ export default function SubmitPage() {
     // Show results view if we have a result
     if (result && result.success && result.classification) {
         const cls = result.classification;
+        const isResource = result.classification.submission_type === 'resource';
+
         return (
             <div className="max-w-3xl mx-auto py-8 space-y-6">
                 {/* Success Header */}
@@ -227,8 +248,14 @@ export default function SubmitPage() {
                     </div>
                     <h1 className="text-3xl font-bold">Analysis Complete</h1>
                     <p className="text-muted-foreground">
-                        Your evidence has been classified and added to the knowledge base.
+                        {isResource
+                            ? "Your learning resource has been added to the Learning Library."
+                            : "Your evidence has been classified and added to the Evidence Library."
+                        }
                     </p>
+                    <Badge variant="outline" className="mt-2">
+                        {isResource ? "Learning Resource" : "Evidence"}
+                    </Badge>
                 </div>
 
                 {/* Classification Result Card */}
@@ -260,7 +287,7 @@ export default function SubmitPage() {
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                                     <Target className="h-4 w-4" />
-                                    Impacted DCWF Tasks
+                                    Related DCWF Tasks
                                 </div>
                                 <div className="space-y-2">
                                     {cls.dcwf_tasks.slice(0, 5).map((task, i) => (
@@ -301,7 +328,7 @@ export default function SubmitPage() {
                         {/* Work Roles */}
                         {cls.work_roles && cls.work_roles.length > 0 && (
                             <div className="space-y-2">
-                                <div className="text-sm font-semibold text-muted-foreground">Affected Work Roles</div>
+                                <div className="text-sm font-semibold text-muted-foreground">Relevant Work Roles</div>
                                 <div className="flex flex-wrap gap-2">
                                     {cls.work_roles.map((role, i) => (
                                         <Badge key={i} variant="secondary">{role}</Badge>
@@ -319,44 +346,115 @@ export default function SubmitPage() {
                         Submit Another
                     </Button>
                     <Button
-                        onClick={() => {
-                            // Build a context message about the submission
-                            const contextMsg = `I just submitted evidence that was classified as "${cls.classification}" with ${Math.round(cls.confidence * 100)}% confidence. The analysis found: ${cls.rationale?.slice(0, 200)}... Can you help me understand what this means for cybersecurity careers?`;
-                            router.push(`/chat?context=${encodeURIComponent(contextMsg)}`);
-                        }}
+                        onClick={() => router.push(isResource ? '/resources?submission_type=resource' : '/resources?submission_type=evidence')}
                         className="flex-1"
                     >
-                        Discuss with AI Assistant
+                        View {isResource ? 'Learning Library' : 'Evidence Library'}
                         <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                 </div>
-
-                {/* Duplicate Notice */}
-                {result.is_duplicate && (
-                    <Alert>
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Duplicate Detected</AlertTitle>
-                        <AlertDescription>
-                            This content was already in our database. Showing existing classification.
-                        </AlertDescription>
-                    </Alert>
-                )}
             </div>
         );
     }
 
     return (
-        <div className="max-w-2xl mx-auto py-8">
-            <div className="mb-8 text-center">
-                <h1 className="text-3xl font-bold mb-2">Submit Evidence</h1>
-                <p className="text-muted-foreground">
-                    Help us map the impact of AI by submitting articles, videos, or papers.
+        <div className="max-w-4xl mx-auto py-8 space-y-8">
+            {/* Hero Section */}
+            <div className="text-center space-y-4">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                    <Sparkles className="h-4 w-4" />
+                    AI-Powered Analysis
+                </div>
+                <h1 className="text-4xl font-bold tracking-tight">
+                    Contribute to the Research
+                </h1>
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    Submit articles, YouTube videos, courses, or certifications. Our AI automatically
+                    classifies content and maps it to DCWF work roles.
                 </p>
+            </div>
+
+            {/* What to Submit - Two Cards */}
+            <div className="grid md:grid-cols-2 gap-6">
+                {/* Evidence Card */}
+                <Card className="border-2 hover:border-blue-500/50 transition-colors group">
+                    <CardHeader className="pb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                                <TrendingUp className="h-6 w-6 text-blue-500" />
+                            </div>
+                            <div>
+                                <CardTitle className="text-lg">Evidence & Research</CardTitle>
+                                <CardDescription>AI impact on cybersecurity</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                            Content that shows how AI is changing the cybersecurity workforce - news, research, expert opinions.
+                        </p>
+                        <div className="space-y-3">
+                            {EVIDENCE_EXAMPLES.map((item, i) => (
+                                <div key={i} className="flex items-center gap-3 text-sm">
+                                    <item.icon className={`h-4 w-4 ${item.color}`} />
+                                    <span>{item.text}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Learning Resources Card */}
+                <Card className="border-2 hover:border-emerald-500/50 transition-colors group">
+                    <CardHeader className="pb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                                <GraduationCap className="h-6 w-6 text-emerald-500" />
+                            </div>
+                            <div>
+                                <CardTitle className="text-lg">Learning Resources</CardTitle>
+                                <CardDescription>Education & certifications</CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <p className="text-sm text-muted-foreground">
+                            Educational content to help people build cybersecurity skills - courses, tutorials, certifications.
+                        </p>
+                        <div className="space-y-3">
+                            {RESOURCE_EXAMPLES.map((item, i) => (
+                                <div key={i} className="flex items-center gap-3 text-sm">
+                                    <item.icon className={`h-4 w-4 ${item.color}`} />
+                                    <span>{item.text}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* YouTube Emphasis Banner */}
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent border border-red-500/20 p-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
+                        <Play className="h-7 w-7 text-red-500 ml-1" />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-lg flex items-center gap-2">
+                            <Youtube className="h-5 w-5 text-red-500" />
+                            YouTube Videos Welcome
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Paste any YouTube link - we'll extract and analyze the video content automatically.
+                            Both educational tutorials and news/discussion videos are accepted.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {/* Loading State */}
             {isPending && (
-                <Card className="mb-6 border-primary/30 bg-primary/5">
+                <Card className="border-primary/30 bg-primary/5">
                     <CardContent className="py-12 text-center">
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
                             <Loader2 className="h-8 w-8 text-primary animate-spin" />
@@ -379,17 +477,32 @@ export default function SubmitPage() {
                 </Card>
             )}
 
-            <Card className={isPending ? 'opacity-50 pointer-events-none' : ''}>
+            {/* Submit Form */}
+            <Card className={`border-2 ${isPending ? 'opacity-50 pointer-events-none' : ''}`}>
                 <CardHeader>
-                    <CardTitle>Evidence Details</CardTitle>
-                    <CardDescription>Choose how you want to provide source material.</CardDescription>
+                    <CardTitle className="flex items-center gap-2">
+                        <Brain className="h-5 w-5 text-primary" />
+                        Submit Content for Analysis
+                    </CardTitle>
+                    <CardDescription>
+                        Our AI will automatically detect whether it's evidence or a learning resource.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                         <TabsList className="grid w-full grid-cols-3 mb-6">
-                            <TabsTrigger value="url">Link / URL</TabsTrigger>
-                            <TabsTrigger value="file">File Upload</TabsTrigger>
-                            <TabsTrigger value="text">Paste Text</TabsTrigger>
+                            <TabsTrigger value="url" className="gap-2">
+                                <Globe className="h-4 w-4" />
+                                URL / Link
+                            </TabsTrigger>
+                            <TabsTrigger value="file" className="gap-2">
+                                <UploadCloud className="h-4 w-4" />
+                                File Upload
+                            </TabsTrigger>
+                            <TabsTrigger value="text" className="gap-2">
+                                <FileText className="h-4 w-4" />
+                                Paste Text
+                            </TabsTrigger>
                         </TabsList>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -398,59 +511,66 @@ export default function SubmitPage() {
                                     <AlertCircle className="h-4 w-4" />
                                     <AlertTitle>Error</AlertTitle>
                                     <AlertDescription>
-                                        {error instanceof Error ? error.message : "Failed to submit evidence."}
+                                        {error instanceof Error ? error.message : "Failed to submit content."}
                                     </AlertDescription>
                                 </Alert>
                             )}
 
-                            <TabsContent value="url" className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="url">Resource URL</Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        Articles, YouTube videos, and web pages accepted
-                                    </p>
+                            <TabsContent value="url" className="space-y-4 mt-0">
+                                <div className="space-y-3">
+                                    <Label htmlFor="url" className="text-base">Enter URL</Label>
                                     <Input
                                         id="url"
-                                        placeholder="https://example.com/article or YouTube link..."
+                                        placeholder="https://youtube.com/watch?v=... or any article URL"
                                         value={url}
                                         onChange={(e) => setUrl(e.target.value)}
                                         disabled={isPending}
+                                        className="h-12 text-base"
                                     />
+                                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                                        <Badge variant="secondary" className="font-normal">YouTube</Badge>
+                                        <Badge variant="secondary" className="font-normal">News Articles</Badge>
+                                        <Badge variant="secondary" className="font-normal">Research Papers</Badge>
+                                        <Badge variant="secondary" className="font-normal">Course Pages</Badge>
+                                        <Badge variant="secondary" className="font-normal">Blog Posts</Badge>
+                                    </div>
                                 </div>
                             </TabsContent>
 
-                            <TabsContent value="file" className="space-y-4">
+                            <TabsContent value="file" className="space-y-4 mt-0">
                                 <div
                                     className={`
-                                        border-2 border-dashed rounded-lg p-12 text-center transition-colors
-                                        ${file ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'}
+                                        border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer
+                                        ${file ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'}
                                     `}
                                     onDragOver={(e) => e.preventDefault()}
                                     onDrop={handleFileDrop}
+                                    onClick={() => !file && document.getElementById('file-upload')?.click()}
                                 >
                                     {file ? (
                                         <div className="flex flex-col items-center">
-                                            <FileType className="h-10 w-10 text-primary mb-2" />
-                                            <p className="font-medium">{file.name}</p>
+                                            <FileType className="h-12 w-12 text-primary mb-3" />
+                                            <p className="font-semibold text-lg">{file.name}</p>
                                             <p className="text-sm text-muted-foreground">{(file.size / 1024).toFixed(1)} KB</p>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="mt-2 text-destructive hover:text-destructive"
-                                                onClick={() => setFile(null)}
+                                                className="mt-3 text-destructive hover:text-destructive"
+                                                onClick={(e) => { e.stopPropagation(); setFile(null); }}
                                             >
-                                                Remove
+                                                Remove File
                                             </Button>
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col items-center cursor-pointer" onClick={() => document.getElementById('file-upload')?.click()}>
-                                            <UploadCloud className="h-10 w-10 text-muted-foreground mb-4" />
-                                            <p className="font-medium">Click to upload or drag and drop</p>
-                                            <p className="text-sm text-muted-foreground mt-1">PDF, DOCX, TXT (Max 10MB)</p>
+                                        <div className="flex flex-col items-center">
+                                            <UploadCloud className="h-12 w-12 text-muted-foreground mb-4" />
+                                            <p className="font-semibold text-lg">Drop a file here or click to browse</p>
+                                            <p className="text-sm text-muted-foreground mt-2">PDF, DOCX, or TXT up to 10MB</p>
                                             <input
                                                 id="file-upload"
                                                 type="file"
                                                 className="hidden"
+                                                accept=".pdf,.docx,.txt"
                                                 onChange={(e) => e.target.files?.[0] && setFile(e.target.files[0])}
                                             />
                                         </div>
@@ -458,13 +578,13 @@ export default function SubmitPage() {
                                 </div>
                             </TabsContent>
 
-                            <TabsContent value="text" className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="content">Manual Content</Label>
+                            <TabsContent value="text" className="space-y-4 mt-0">
+                                <div className="space-y-3">
+                                    <Label htmlFor="content" className="text-base">Paste Content</Label>
                                     <Textarea
                                         id="content"
-                                        placeholder="Paste article text here..."
-                                        className="min-h-[200px]"
+                                        placeholder="Paste article text, research findings, or course description here..."
+                                        className="min-h-[200px] text-base"
                                         value={content}
                                         onChange={(e) => setContent(e.target.value)}
                                         disabled={isPending}
@@ -472,14 +592,42 @@ export default function SubmitPage() {
                                 </div>
                             </TabsContent>
 
-                            <Button type="submit" className="w-full" disabled={isPending}>
-                                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {activeTab === 'file' ? 'Upload & Analyze' : 'Analyze'}
+                            <Button type="submit" size="lg" className="w-full" disabled={isPending}>
+                                {isPending ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                        Analyzing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Brain className="mr-2 h-5 w-5" />
+                                        Analyze with AI
+                                    </>
+                                )}
                             </Button>
                         </form>
                     </Tabs>
                 </CardContent>
             </Card>
+
+            {/* How it Works */}
+            <div className="grid md:grid-cols-3 gap-4 pt-4">
+                <div className="text-center p-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 text-primary font-bold">1</div>
+                    <h4 className="font-semibold mb-1">Submit Content</h4>
+                    <p className="text-sm text-muted-foreground">Paste a URL, upload a file, or paste text directly</p>
+                </div>
+                <div className="text-center p-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 text-primary font-bold">2</div>
+                    <h4 className="font-semibold mb-1">AI Analyzes</h4>
+                    <p className="text-sm text-muted-foreground">Gemini extracts key insights and maps to DCWF tasks</p>
+                </div>
+                <div className="text-center p-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3 text-primary font-bold">3</div>
+                    <h4 className="font-semibold mb-1">Added to Library</h4>
+                    <p className="text-sm text-muted-foreground">Content is classified and added to our knowledge base</p>
+                </div>
+            </div>
         </div>
     );
 }
