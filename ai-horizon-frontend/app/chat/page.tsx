@@ -142,16 +142,17 @@ function ChatContent() {
 
 **What I can help you with:**
 * Explore how AI is impacting specific DCWF work roles and tasks
-* Find evidence and research on AI automation in cybersecurity
+* Search our **Evidence Library** - research and articles on AI's workforce impact
+* Browse **Learning Resources** - curated training, certifications, and courses
 * Understand which skills are becoming more or less valuable
-* Create personalized career development plans
-* Generate practice quizzes to test your knowledge
+* Get personalized career development guidance
 
 **Try asking me:**
 * "How will AI affect the Security Analyst role?"
-* "What skills should I develop to stay relevant?"
-* "Create a quiz on threat detection fundamentals"
-* "Help me build a career plan for transitioning to AI-augmented security"`
+* "What certifications should I pursue for cloud security?"
+* "Show me evidence about AI automating SOC tasks"
+* "What free resources can help me learn threat hunting?"
+* "Help me build a career plan for AI-augmented security"`
         }
     ]);
     const scrollRef = useRef<HTMLDivElement>(null);
