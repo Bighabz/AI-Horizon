@@ -832,23 +832,71 @@ async def health():
 @app.get("/api/file-stores/stats")
 async def file_store_stats():
     """
-    Get info about Gemini File Search stores.
-    Note: The Gemini SDK doesn't support listing documents, so we show config status.
+    Get document counts for Gemini File Search stores using REST API.
+    The SDK has a bug, so we call the API directly.
     """
-    return {
-        "dcwf_store": {
-            "configured": DCWF_STORE_NAME is not None,
-            "store_name": DCWF_STORE_NAME,
-            "note": "Contains DCWF task reference data for semantic search"
-        },
-        "artifacts_store": {
-            "configured": ARTIFACTS_STORE_NAME is not None,
-            "store_name": ARTIFACTS_STORE_NAME,
-            "note": "Contains evidence/resources uploaded after submission - SDK doesn't support document listing"
-        },
+    import httpx
+
+    api_key = API_KEYS[0] if API_KEYS else None
+    if not api_key:
+        raise HTTPException(status_code=503, detail="No Gemini API key configured")
+
+    result = {
+        "dcwf_store": None,
+        "artifacts_store": None,
         "supabase_count": len(evidence_store),
-        "note": "Gemini file stores use semantic search (embeddings) for RAG queries. New submissions are added to artifacts_store automatically."
     }
+
+    async def get_store_documents(store_name: str) -> dict:
+        """Fetch documents from a file store using REST API."""
+        if not store_name:
+            return {"configured": False}
+
+        # REST API endpoint for listing documents
+        # Format: fileSearchStores/{store_id} -> need to extract store_id
+        store_id = store_name.replace("fileSearchStores/", "")
+        url = f"https://generativelanguage.googleapis.com/v1beta/fileSearchStores/{store_id}/documents"
+
+        try:
+            async with httpx.AsyncClient() as http_client:
+                response = await http_client.get(
+                    url,
+                    params={"key": api_key},
+                    timeout=30.0
+                )
+
+                if response.status_code == 200:
+                    data = response.json()
+                    documents = data.get("documents", [])
+                    return {
+                        "configured": True,
+                        "store_name": store_name,
+                        "document_count": len(documents),
+                        "documents": [
+                            {"name": doc.get("name", ""), "displayName": doc.get("displayName", "N/A")}
+                            for doc in documents[:50]  # Limit to first 50
+                        ]
+                    }
+                else:
+                    return {
+                        "configured": True,
+                        "store_name": store_name,
+                        "error": f"API returned {response.status_code}: {response.text[:200]}"
+                    }
+        except Exception as e:
+            return {
+                "configured": True,
+                "store_name": store_name,
+                "error": str(e)
+            }
+
+    # Fetch both stores in parallel
+    if DCWF_STORE_NAME:
+        result["dcwf_store"] = await get_store_documents(DCWF_STORE_NAME)
+    if ARTIFACTS_STORE_NAME:
+        result["artifacts_store"] = await get_store_documents(ARTIFACTS_STORE_NAME)
+
+    return result
 
 
 @app.post("/api/chat", response_model=ChatResponse)
