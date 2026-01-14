@@ -829,6 +829,60 @@ async def health():
     }
 
 
+@app.get("/api/file-stores/stats")
+async def file_store_stats():
+    """
+    Get document counts for Gemini File Search stores.
+    Shows what's currently indexed in each store.
+    """
+    if not client:
+        raise HTTPException(status_code=503, detail="Gemini client not configured")
+
+    result = {
+        "dcwf_store": None,
+        "artifacts_store": None,
+    }
+
+    try:
+        # Get DCWF store info
+        if DCWF_STORE_NAME:
+            try:
+                dcwf_docs = list(client.file_search_stores.list_documents(store=DCWF_STORE_NAME))
+                result["dcwf_store"] = {
+                    "store_name": DCWF_STORE_NAME,
+                    "document_count": len(dcwf_docs),
+                    "documents": [
+                        {"name": doc.name, "display_name": getattr(doc, 'display_name', 'N/A')}
+                        for doc in dcwf_docs[:50]  # Limit to first 50
+                    ]
+                }
+            except Exception as e:
+                result["dcwf_store"] = {"error": str(e)}
+
+        # Get Artifacts store info
+        if ARTIFACTS_STORE_NAME:
+            try:
+                artifact_docs = list(client.file_search_stores.list_documents(store=ARTIFACTS_STORE_NAME))
+                result["artifacts_store"] = {
+                    "store_name": ARTIFACTS_STORE_NAME,
+                    "document_count": len(artifact_docs),
+                    "documents": [
+                        {"name": doc.name, "display_name": getattr(doc, 'display_name', 'N/A')}
+                        for doc in artifact_docs[:100]  # Limit to first 100
+                    ]
+                }
+            except Exception as e:
+                result["artifacts_store"] = {"error": str(e)}
+
+        # Add Supabase count for comparison
+        result["supabase_count"] = len(evidence_store)
+
+        return result
+    except Exception as e:
+        logger.error(f"Error getting file store stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """
