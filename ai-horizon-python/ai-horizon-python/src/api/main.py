@@ -52,7 +52,11 @@ class RateLimitError(Exception):
 
 # Configuration - read AFTER dotenv is loaded
 DCWF_STORE_NAME = os.getenv("DCWF_STORE_NAME")
-ARTIFACTS_STORE_NAME = os.getenv("ARTIFACTS_STORE_NAME")
+EVIDENCE_STORE_NAME = os.getenv("EVIDENCE_STORE_NAME")  # For AI impact research/articles
+RESOURCES_STORE_NAME = os.getenv("RESOURCES_STORE_NAME")  # For training/certifications
+# Legacy support - fall back to ARTIFACTS_STORE_NAME if new names not set
+if not EVIDENCE_STORE_NAME:
+    EVIDENCE_STORE_NAME = os.getenv("ARTIFACTS_STORE_NAME")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 ADMIN_API_KEY = os.getenv("ADMIN_API_KEY")  # Required for admin endpoints
 
@@ -82,7 +86,7 @@ for i in range(2, 10):
     if key:
         API_KEYS.append(key)
 
-logger.info(f"Config loaded: {len(API_KEYS)} API key(s), DCWF={DCWF_STORE_NAME}, ARTIFACTS={ARTIFACTS_STORE_NAME}")
+logger.info(f"Config loaded: {len(API_KEYS)} API key(s), DCWF={DCWF_STORE_NAME}, EVIDENCE={EVIDENCE_STORE_NAME}, RESOURCES={RESOURCES_STORE_NAME}")
 
 # API key rotation state
 current_key_index = 0
@@ -824,7 +828,8 @@ async def health():
         "supabase_configured": bool(os.getenv("SUPABASE_URL")) and bool(os.getenv("SUPABASE_SERVICE_KEY")),
         "stores": {
             "dcwf": DCWF_STORE_NAME is not None,
-            "artifacts": ARTIFACTS_STORE_NAME is not None,
+            "evidence": EVIDENCE_STORE_NAME is not None,
+            "resources": RESOURCES_STORE_NAME is not None,
         }
     }
 
@@ -843,7 +848,8 @@ async def file_store_stats():
 
     result = {
         "dcwf_store": None,
-        "artifacts_store": None,
+        "evidence_store": None,
+        "resources_store": None,
         "supabase_count": len(evidence_store),
     }
 
@@ -890,11 +896,13 @@ async def file_store_stats():
                 "error": str(e)
             }
 
-    # Fetch both stores in parallel
+    # Fetch all stores
     if DCWF_STORE_NAME:
         result["dcwf_store"] = await get_store_documents(DCWF_STORE_NAME)
-    if ARTIFACTS_STORE_NAME:
-        result["artifacts_store"] = await get_store_documents(ARTIFACTS_STORE_NAME)
+    if EVIDENCE_STORE_NAME:
+        result["evidence_store"] = await get_store_documents(EVIDENCE_STORE_NAME)
+    if RESOURCES_STORE_NAME:
+        result["resources_store"] = await get_store_documents(RESOURCES_STORE_NAME)
 
     return result
 
@@ -962,12 +970,14 @@ async def chat(request: ChatRequest):
         parts=[types.Part(text=current_message)]
     ))
 
-    # Build File Search tools
+    # Build File Search tools - include all stores for comprehensive search
     stores = []
     if DCWF_STORE_NAME:
         stores.append(DCWF_STORE_NAME)
-    if ARTIFACTS_STORE_NAME:
-        stores.append(ARTIFACTS_STORE_NAME)
+    if EVIDENCE_STORE_NAME:
+        stores.append(EVIDENCE_STORE_NAME)
+    if RESOURCES_STORE_NAME:
+        stores.append(RESOURCES_STORE_NAME)
 
     tools = []
     if stores:
@@ -1298,12 +1308,14 @@ async def search_post(request: SearchRequest):
     # Expand search with semantic correlations
     search_query = expand_search_terms(search_query)
 
-    # Use File Search for RAG query
+    # Use File Search for RAG query - include all stores
     stores = []
     if DCWF_STORE_NAME:
         stores.append(DCWF_STORE_NAME)
-    if ARTIFACTS_STORE_NAME:
-        stores.append(ARTIFACTS_STORE_NAME)
+    if EVIDENCE_STORE_NAME:
+        stores.append(EVIDENCE_STORE_NAME)
+    if RESOURCES_STORE_NAME:
+        stores.append(RESOURCES_STORE_NAME)
 
     try:
         # Note: Can't use response_mime_type with File Search tools
@@ -1574,8 +1586,10 @@ async def submit_artifact(
     except Exception as e:
         logger.error(f"Failed to add artifact {artifact_id} to evidence store: {e}")
 
-    # Store in File Search (background task)
-    if ARTIFACTS_STORE_NAME:
+    # Store in File Search (background task) - route to correct store based on submission_type
+    submission_type = classification.get("submission_type", "evidence")
+    target_store = RESOURCES_STORE_NAME if submission_type == "resource" else EVIDENCE_STORE_NAME
+    if target_store:
         background_tasks.add_task(
             store_artifact_in_file_search,
             artifact_id=artifact_id,
@@ -1584,6 +1598,7 @@ async def submit_artifact(
             source_url=str(request.url) if request.url else None,
             source_type=request.source_type,
             classification=classification,
+            target_store=target_store,
         )
 
     return SubmitArtifactResponse(
@@ -1752,8 +1767,10 @@ async def upload_file(
     }
     add_to_evidence_store(artifact_data)
 
-    # Store in File Search (background task)
-    if ARTIFACTS_STORE_NAME:
+    # Store in File Search (background task) - route to correct store based on submission_type
+    submission_type = classification.get("submission_type", "evidence")
+    target_store = RESOURCES_STORE_NAME if submission_type == "resource" else EVIDENCE_STORE_NAME
+    if target_store:
         background_tasks.add_task(
             store_artifact_in_file_search,
             artifact_id=artifact_id,
@@ -1762,6 +1779,7 @@ async def upload_file(
             source_url=None,
             source_type=source_type,
             classification=classification,
+            target_store=target_store,
         )
 
     return SubmitArtifactResponse(
@@ -1780,16 +1798,18 @@ async def store_artifact_in_file_search(
     source_url: Optional[str],
     source_type: str,
     classification: dict,
+    target_store: str,
 ):
-    """Background task to store artifact in Gemini File Search."""
+    """Background task to store artifact in the appropriate Gemini File Search store."""
     import tempfile
-    
+
     artifact_data = {
         "artifact_id": artifact_id,
         "title": title,
         "content": content,
         "source_url": source_url,
         "source_type": source_type,
+        "submission_type": classification.get("submission_type", "evidence"),
         "classification": classification.get("classification"),
         "confidence": classification.get("confidence"),
         "rationale": classification.get("rationale"),
@@ -1798,19 +1818,20 @@ async def store_artifact_in_file_search(
         "key_findings": classification.get("key_findings", []),
         "stored_at": datetime.now().isoformat(),
     }
-    
+
     # Write to temp file and upload
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
         json.dump(artifact_data, f)
         temp_path = f.name
-    
+
     try:
         operation = client.file_search_stores.upload_to_file_search_store(
             file=temp_path,
-            file_search_store_name=ARTIFACTS_STORE_NAME,
+            file_search_store_name=target_store,
             config={"display_name": f"{title} ({artifact_id})"},
         )
-        logger.info(f"Stored artifact {artifact_id}: {operation}")
+        store_type = "resources" if "resources" in target_store.lower() else "evidence"
+        logger.info(f"Stored artifact {artifact_id} in {store_type} store: {operation}")
     except Exception as e:
         logger.error(f"Failed to store artifact {artifact_id}: {e}")
     finally:
@@ -1858,12 +1879,13 @@ async def get_evidence(task_id: str):
     if not client:
         raise HTTPException(status_code=500, detail="Gemini client not configured")
     
+    # For evidence lookup, only search the evidence store
     stores = []
-    if ARTIFACTS_STORE_NAME:
-        stores.append(ARTIFACTS_STORE_NAME)
-    
+    if EVIDENCE_STORE_NAME:
+        stores.append(EVIDENCE_STORE_NAME)
+
     if not stores:
-        return {"task_id": task_id, "evidence": [], "message": "No artifact store configured"}
+        return {"task_id": task_id, "evidence": [], "message": "No evidence store configured"}
     
     try:
         response = client.models.generate_content(
