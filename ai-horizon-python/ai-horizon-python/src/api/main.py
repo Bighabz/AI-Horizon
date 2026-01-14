@@ -2301,7 +2301,7 @@ async def cleanup_untitled_artifacts(_: bool = Depends(verify_admin_key)):
 
 
 @app.post("/api/admin/reload")
-async def reload_evidence_store(_: bool = Depends(verify_admin_key)):
+async def reload_evidence_store_endpoint(_: bool = Depends(verify_admin_key)):
     """Reload evidence store from Supabase.
     Requires X-Admin-Key header."""
     try:
@@ -2313,6 +2313,125 @@ async def reload_evidence_store(_: bool = Depends(verify_admin_key)):
         }
     except Exception as e:
         logger.error(f"Reload error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/admin/list-all")
+async def list_all_artifacts(_: bool = Depends(verify_admin_key)):
+    """List all artifacts in Supabase with source URLs for cleanup review.
+    Requires X-Admin-Key header."""
+    try:
+        from src.api.supabase_client import get_supabase
+        client = get_supabase()
+
+        response = client.table("document_registry").select(
+            "id,file_name,source_url,source_type,classification,created_at,submission_type"
+        ).order("created_at", desc=True).execute()
+
+        items = []
+        for row in response.data:
+            items.append({
+                "id": row.get("id"),
+                "title": row.get("file_name"),
+                "source_url": row.get("source_url"),
+                "source_type": row.get("source_type"),
+                "classification": row.get("classification"),
+                "submission_type": row.get("submission_type"),
+                "created_at": row.get("created_at"),
+            })
+
+        # Group by source domain for easy identification of bulk imports
+        domains = {}
+        for item in items:
+            url = item.get("source_url") or ""
+            if url:
+                from urllib.parse import urlparse
+                domain = urlparse(url).netloc
+                if domain not in domains:
+                    domains[domain] = 0
+                domains[domain] += 1
+
+        return {
+            "total": len(items),
+            "items": items,
+            "domains": dict(sorted(domains.items(), key=lambda x: x[1], reverse=True)),
+        }
+    except Exception as e:
+        logger.error(f"List all error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/admin/delete-by-domain/{domain}")
+async def delete_by_domain(domain: str, _: bool = Depends(verify_admin_key)):
+    """Delete all artifacts from a specific domain.
+    Requires X-Admin-Key header.
+    Example: DELETE /api/admin/delete-by-domain/theaihorizon.org"""
+    try:
+        from src.api.supabase_client import get_supabase
+        client = get_supabase()
+
+        # Find all records with this domain in their source_url
+        response = client.table("document_registry").select("id,source_url").execute()
+
+        ids_to_delete = []
+        for row in response.data:
+            url = row.get("source_url") or ""
+            if domain.lower() in url.lower():
+                ids_to_delete.append(row["id"])
+
+        if not ids_to_delete:
+            return {
+                "success": True,
+                "deleted_count": 0,
+                "message": f"No artifacts found from domain: {domain}"
+            }
+
+        # Delete all matching records
+        for record_id in ids_to_delete:
+            client.table("document_registry").delete().eq("id", record_id).execute()
+
+        # Reload the evidence store
+        load_evidence_store()
+
+        return {
+            "success": True,
+            "deleted_count": len(ids_to_delete),
+            "message": f"Deleted {len(ids_to_delete)} artifacts from domain: {domain}"
+        }
+    except Exception as e:
+        logger.error(f"Delete by domain error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/admin/delete-by-ids")
+async def delete_by_ids(ids: list[str], _: bool = Depends(verify_admin_key)):
+    """Delete multiple artifacts by their Supabase UUIDs.
+    Requires X-Admin-Key header.
+    Body: ["uuid1", "uuid2", ...]"""
+    try:
+        from src.api.supabase_client import get_supabase
+        client = get_supabase()
+
+        deleted_count = 0
+        for record_id in ids:
+            try:
+                response = client.table("document_registry").delete().eq("id", record_id).execute()
+                if response.data:
+                    deleted_count += 1
+            except Exception as e:
+                logger.warning(f"Failed to delete {record_id}: {e}")
+
+        # Reload the evidence store
+        load_evidence_store()
+
+        return {
+            "success": True,
+            "deleted_count": deleted_count,
+            "requested_count": len(ids),
+            "message": f"Deleted {deleted_count} of {len(ids)} requested artifacts"
+        }
+    except Exception as e:
+        logger.error(f"Delete by IDs error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
