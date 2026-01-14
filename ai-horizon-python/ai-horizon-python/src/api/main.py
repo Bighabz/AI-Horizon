@@ -742,11 +742,13 @@ Determine if this content is EVIDENCE or a RESOURCE:
 Examples of EVIDENCE: "AI is replacing SOC analysts" article, research on GPT for threat detection, workforce layoff news, expert interviews about AI impact
 Examples of RESOURCES: Cybersecurity bootcamp landing page, CompTIA certification course, "How to use Splunk" tutorial, penetration testing course video
 
-## Classification Categories (only if relevant)
+## Classification Categories (ONLY for EVIDENCE, not resources)
 - **Replace**: AI will fully automate this task (>70% AI capability)
 - **Augment**: AI assists but humans remain essential (40-70% AI)
 - **Remain Human**: Must stay human due to ethics, legal, or accountability
 - **New Task**: AI enables new capabilities not in traditional DCWF
+
+**IMPORTANT**: If submission_type is "resource", set classification to null. Resources are educational materials - they don't prove AI impact, so they shouldn't have a classification.
 
 ## Scoring Criteria
 - **Relevance** (0-1): How relevant is this to cybersecurity/DCWF? (< 0.3 = not relevant)
