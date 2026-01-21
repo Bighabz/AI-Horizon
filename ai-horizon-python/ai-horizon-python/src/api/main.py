@@ -2042,11 +2042,13 @@ async def list_resources(
     results = []
 
     for artifact in evidence_store:
-        # Apply filters
-        if role and role.lower() not in (artifact.get("work_role") or "").lower():
-            # Also check work_roles list
-            work_roles = artifact.get("work_roles", [])
-            if not any(role.lower() in wr.lower() for wr in work_roles):
+        # Apply filters - use exact match for role (case insensitive)
+        if role:
+            role_lower = role.lower()
+            work_role = (artifact.get("work_role") or "").lower()
+            work_roles = [wr.lower() for wr in artifact.get("work_roles", [])]
+            # Check exact match in work_role or work_roles list
+            if role_lower != work_role and role_lower not in work_roles:
                 continue
 
         if resource_type and artifact.get("resource_type") != resource_type:
