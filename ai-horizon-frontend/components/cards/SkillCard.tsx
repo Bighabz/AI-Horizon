@@ -14,23 +14,31 @@ interface SkillCardProps {
     skill: SkillItem;
 }
 
-// Determine dominant classification from counts
-function getDominantClassification(classifications: SkillItem['classifications']): string {
+// Check if there's any evidence-based classification data
+function hasClassificationData(classifications: SkillItem['classifications']): boolean {
+    return Object.values(classifications).reduce((a, b) => a + b, 0) > 0;
+}
+
+// Determine dominant classification from counts (only if there's data)
+function getDominantClassification(classifications: SkillItem['classifications']): string | null {
+    const total = Object.values(classifications).reduce((a, b) => a + b, 0);
+    if (total === 0) return null;
     const entries = Object.entries(classifications) as [string, number][];
     const sorted = entries.sort((a, b) => b[1] - a[1]);
-    return sorted[0]?.[0] || 'Augment';
+    return sorted[0]?.[0] || null;
 }
 
 // Calculate confidence based on classification distribution
-function getConfidence(classifications: SkillItem['classifications']): number {
+function getConfidence(classifications: SkillItem['classifications']): number | null {
     const total = Object.values(classifications).reduce((a, b) => a + b, 0);
-    if (total === 0) return 0.7;
+    if (total === 0) return null;
     const max = Math.max(...Object.values(classifications));
     return max / total;
 }
 
 export function SkillCard({ skill }: SkillCardProps) {
     const router = useRouter();
+    const hasData = hasClassificationData(skill.classifications);
     const dominantClassification = getDominantClassification(skill.classifications);
     const confidence = getConfidence(skill.classifications);
 
@@ -58,26 +66,34 @@ export function SkillCard({ skill }: SkillCardProps) {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-3 mt-2">
                     <div className="flex items-center text-xs text-muted-foreground">
                         <FileText className="mr-1 h-3 w-3" />
-                        {skill.total_resources} Resources
+                        {skill.evidence_count || 0} Evidence
                     </div>
                     <div className="flex items-center text-xs text-muted-foreground">
-                        <Users className="mr-1 h-3 w-3" />
-                        {skill.free_resources} Free
+                        <BookOpen className="mr-1 h-3 w-3" />
+                        {skill.resource_count || 0} Resources
                     </div>
                 </div>
 
                 <div className="mt-4 space-y-2">
-                    <div className="text-xs font-semibold text-muted-foreground">Dominant Classification</div>
-                    <ClassificationBadge
-                        type={dominantClassification as "Replace" | "Augment" | "Remain Human" | "New Task"}
-                        className="w-full justify-center"
-                    />
-                    <div className="text-[10px] text-center text-muted-foreground mt-1">
-                        {Math.round(confidence * 100)}% Confidence
-                    </div>
+                    <div className="text-xs font-semibold text-muted-foreground">AI Impact Classification</div>
+                    {hasData && dominantClassification ? (
+                        <>
+                            <ClassificationBadge
+                                type={dominantClassification as "Replace" | "Augment" | "Remain Human" | "New Task"}
+                                className="w-full justify-center"
+                            />
+                            <div className="text-[10px] text-center text-muted-foreground mt-1">
+                                {Math.round((confidence || 0) * 100)}% Confidence
+                            </div>
+                        </>
+                    ) : (
+                        <div className="w-full py-2 px-3 rounded-md bg-muted/50 text-center text-xs text-muted-foreground">
+                            No evidence yet
+                        </div>
+                    )}
                     <div className="flex gap-2 mt-2">
                         <Button
                             variant="secondary"
