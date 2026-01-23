@@ -28,10 +28,13 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(env_path, override=True)
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form, Depends, Header
+from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form, Depends, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import tempfile
 from pydantic import BaseModel, Field, HttpUrl
 from google import genai
@@ -202,12 +205,19 @@ def expand_search_terms(query: str) -> str:
         return f"{query} (related: {', '.join(list(expanded_terms)[:5])})"
     return query
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 # Initialize FastAPI
 app = FastAPI(
     title="AI Horizon API",
     description="Research portal for AI's impact on cybersecurity workforce",
     version="1.0.0",
 )
+
+# Register rate limit handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS for frontend - configurable via environment
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else [
@@ -216,8 +226,8 @@ ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLO
     "https://www.aihorizonproject.com",
     "https://aihorizonproject.com",
 ]
-# Add Vercel preview URLs pattern support
-ALLOW_ORIGIN_REGEX = os.getenv("ALLOW_ORIGIN_REGEX", r"https://.*\.vercel\.app")
+# Add Vercel preview URLs pattern support - restricted to ai-horizon project only
+ALLOW_ORIGIN_REGEX = os.getenv("ALLOW_ORIGIN_REGEX", r"https://ai-horizon[a-z0-9-]*\.vercel\.app")
 
 app.add_middleware(
     CORSMiddleware,
@@ -910,7 +920,8 @@ async def file_store_stats():
 
 
 @app.post("/api/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+@limiter.limit("20/minute")
+async def chat(request: Request, chat_request: ChatRequest):
     """
     RAG-powered chat endpoint.
 
@@ -926,11 +937,11 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail="Gemini client not configured")
 
     # Get or create session
-    session_id = request.session_id or str(uuid.uuid4())
+    session_id = chat_request.session_id or str(uuid.uuid4())
     history = get_session_history(session_id)
 
     # Current message
-    current_message = request.message.strip() if request.message else ""
+    current_message = chat_request.message.strip() if chat_request.message else ""
     if not current_message:
         return ChatResponse(
             output="Please enter a message.",
@@ -1027,7 +1038,7 @@ async def chat(request: ChatRequest):
                 assistant_message = "I apologize, but I couldn't generate a response. This may be due to API rate limits. Please try again in a moment."
 
         # Update session history
-        add_to_session(session_id, "user", request.message)
+        add_to_session(session_id, "user", chat_request.message)
         add_to_session(session_id, "assistant", assistant_message)
 
         # Extract sources from local evidence
@@ -1098,7 +1109,9 @@ async def chat(request: ChatRequest):
 
 
 @app.get("/api/search")
+@limiter.limit("30/minute")
 async def search_get(
+    request: Request,
     query: Optional[str] = None,
     job_role: Optional[str] = None,
     dcwf_task: Optional[str] = None,
@@ -1115,7 +1128,7 @@ async def search_get(
         except ValueError:
             pass
 
-    request = SearchRequest(
+    search_req = SearchRequest(
         query=query,
         job_role=job_role,
         dcwf_task=dcwf_task,
@@ -1123,7 +1136,7 @@ async def search_get(
         classification=class_type,
         limit=min(limit, 100),
     )
-    return await search_post(request)
+    return await search_post(request, search_req)
 
 
 def count_evidence_for_task(task_id: str) -> int:
@@ -1253,7 +1266,8 @@ def search_local_evidence(query: str, filters: dict, limit: int = 20) -> list[di
 
 
 @app.post("/api/search")
-async def search_post(request: SearchRequest):
+@limiter.limit("30/minute")
+async def search_post(request: Request, search_request: SearchRequest):
     """
     Search DCWF tasks and evidence.
 
@@ -1269,16 +1283,16 @@ async def search_post(request: SearchRequest):
     """
     # Build filters dict
     filters = {
-        "job_role": request.job_role,
-        "dcwf_task": request.dcwf_task,
-        "ai_tool": request.ai_tool,
-        "classification": request.classification.value if request.classification else None,
+        "job_role": search_request.job_role,
+        "dcwf_task": search_request.dcwf_task,
+        "ai_tool": search_request.ai_tool,
+        "classification": search_request.classification.value if search_request.classification else None,
     }
 
-    query = request.query or ""
+    query = search_request.query or ""
 
     # First, search local evidence store
-    local_results = search_local_evidence(query, filters, request.limit)
+    local_results = search_local_evidence(query, filters, search_request.limit)
 
     # If we have local results, return them
     if local_results:
@@ -1293,14 +1307,14 @@ async def search_post(request: SearchRequest):
     query_parts = []
     if query:
         query_parts.append(query)
-    if request.job_role:
-        query_parts.append(f"job role: {request.job_role}")
-    if request.dcwf_task:
-        query_parts.append(f"DCWF task: {request.dcwf_task}")
-    if request.ai_tool:
-        query_parts.append(f"AI tool: {request.ai_tool}")
-    if request.classification:
-        query_parts.append(f"classification: {request.classification.value}")
+    if search_request.job_role:
+        query_parts.append(f"job role: {search_request.job_role}")
+    if search_request.dcwf_task:
+        query_parts.append(f"DCWF task: {search_request.dcwf_task}")
+    if search_request.ai_tool:
+        query_parts.append(f"AI tool: {search_request.ai_tool}")
+    if search_request.classification:
+        query_parts.append(f"classification: {search_request.classification.value}")
 
     if not query_parts:
         query_parts.append("list cybersecurity tasks impacted by AI")
@@ -1336,7 +1350,7 @@ Return results as a JSON array with this exact format (no markdown, just raw JSO
     }}
 ]
 
-Return up to {request.limit} most relevant results."""
+Return up to {search_request.limit} most relevant results."""
 
         def make_search_request(c):
             return c.models.generate_content(
@@ -1390,8 +1404,10 @@ Return up to {request.limit} most relevant results."""
 
 
 @app.post("/api/submit", response_model=SubmitArtifactResponse)
+@limiter.limit("10/minute")
 async def submit_artifact(
-    request: SubmitArtifactRequest,
+    request: Request,
+    artifact_request: SubmitArtifactRequest,
     background_tasks: BackgroundTasks
 ):
     """
@@ -1409,8 +1425,8 @@ async def submit_artifact(
         raise HTTPException(status_code=500, detail="Gemini client not configured")
 
     # Early URL duplicate check (before extraction to save API calls)
-    if request.url:
-        existing = check_url_exists(str(request.url))
+    if artifact_request.url:
+        existing = check_url_exists(str(artifact_request.url))
         if existing:
             return SubmitArtifactResponse(
                 success=False,
@@ -1427,12 +1443,12 @@ async def submit_artifact(
             )
 
     # Determine content
-    content = request.content
-    title = request.title
+    content = artifact_request.content
+    title = artifact_request.title
 
-    if request.url and not content:
+    if artifact_request.url and not content:
         # Extract content from URL
-        url_str = str(request.url)
+        url_str = str(artifact_request.url)
 
         # Check for YouTube
         if "youtube.com" in url_str or "youtu.be" in url_str:
@@ -1440,7 +1456,7 @@ async def submit_artifact(
                 from src.extraction.router import extract_youtube
                 content = extract_youtube(url_str)
                 title = title or f"YouTube Video: {url_str}"
-                request.source_type = "youtube"
+                artifact_request.source_type = "youtube"
                 logger.info(f"Extracted YouTube transcript: {len(content)} chars")
             except Exception as e:
                 logger.error(f"YouTube extraction failed: {e}")
@@ -1472,7 +1488,7 @@ async def submit_artifact(
             title = f"Text: {first_line}"
 
     # Check for content duplicates (hash-based)
-    if check_duplicate(content, str(request.url) if request.url else None):
+    if check_duplicate(content, str(artifact_request.url) if artifact_request.url else None):
         return SubmitArtifactResponse(
             success=False,
             is_duplicate=True,
@@ -1488,7 +1504,7 @@ async def submit_artifact(
     try:
         classification_prompt = CLASSIFICATION_PROMPT.format(
             title=title or "Untitled",
-            source_type=request.source_type,
+            source_type=artifact_request.source_type,
             content=content[:30000],  # Limit content length
         )
 
@@ -1538,20 +1554,20 @@ async def submit_artifact(
         )
 
     # Register for deduplication (only for relevant content)
-    register_artifact(content, str(request.url) if request.url else None)
+    register_artifact(content, str(artifact_request.url) if artifact_request.url else None)
 
     # Auto-detect resource type from source_type
-    detected_resource_type = request.resource_type
+    detected_resource_type = artifact_request.resource_type
     if not detected_resource_type:
-        if request.source_type == "youtube":
+        if artifact_request.source_type == "youtube":
             detected_resource_type = ResourceType.VIDEO
-        elif request.source_type == "pdf":
+        elif artifact_request.source_type == "pdf":
             detected_resource_type = ResourceType.RESOURCE
         else:
             detected_resource_type = ResourceType.ARTICLE
 
     # Auto-detect difficulty based on content keywords
-    detected_difficulty = request.difficulty
+    detected_difficulty = artifact_request.difficulty
     if not detected_difficulty:
         content_lower = content.lower()
         if any(kw in content_lower for kw in ["advanced", "expert", "senior", "architect"]):
@@ -1566,12 +1582,12 @@ async def submit_artifact(
         "artifact_id": artifact_id,
         "title": title or "Untitled",
         "content": content[:5000],  # Store first 5000 chars for context
-        "source_url": str(request.url) if request.url else None,
-        "source_type": request.source_type,
+        "source_url": str(artifact_request.url) if artifact_request.url else None,
+        "source_type": artifact_request.source_type,
         "resource_type": detected_resource_type.value if detected_resource_type else "Article",
         "difficulty": detected_difficulty.value if detected_difficulty else "Beginner",
-        "is_free": request.is_free,
-        "work_role": request.work_role or (classification.get("work_roles", [None])[0] if classification.get("work_roles") else None),
+        "is_free": artifact_request.is_free,
+        "work_role": artifact_request.work_role or (classification.get("work_roles", [None])[0] if classification.get("work_roles") else None),
         "submission_type": classification.get("submission_type", "evidence"),
         "classification": classification.get("classification"),
         "confidence": classification.get("confidence"),
@@ -1597,8 +1613,8 @@ async def submit_artifact(
             artifact_id=artifact_id,
             title=title or "Untitled",
             content=content,
-            source_url=str(request.url) if request.url else None,
-            source_type=request.source_type,
+            source_url=str(artifact_request.url) if artifact_request.url else None,
+            source_type=artifact_request.source_type,
             classification=classification,
             target_store=target_store,
         )
@@ -1617,7 +1633,9 @@ async def submit_artifact(
 
 
 @app.post("/api/upload")
+@limiter.limit("5/minute")
 async def upload_file(
+    request: Request,
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
@@ -1635,6 +1653,11 @@ async def upload_file(
 
     # Read file content
     file_content = await file.read()
+
+    # Security: Enforce file size limit (10MB)
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    if len(file_content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File too large. Maximum size is 10MB.")
 
     # Extract text based on file type
     content = None

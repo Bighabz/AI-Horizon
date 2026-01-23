@@ -44,3 +44,6 @@ mypy>=1.8.0
 
 # Database
 supabase>=2.0.0
+
+# Security
+slowapi>=0.1.9
