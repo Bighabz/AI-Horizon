@@ -116,9 +116,12 @@ def search_artifacts(query: str, limit: int = 5) -> list[dict]:
     try:
         client = get_supabase()
 
+        # Security: Escape SQL pattern characters to prevent pattern injection
+        safe_query = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
         # Use ilike for basic text search across multiple columns
         response = client.table("document_registry").select("*").or_(
-            f"file_name.ilike.%{query}%,rationale.ilike.%{query}%"
+            f"file_name.ilike.%{safe_query}%,rationale.ilike.%{safe_query}%"
         ).limit(limit).execute()
 
         return response.data
@@ -195,8 +198,10 @@ def check_url_duplicate(url: str) -> dict | None:
             logger.info(f"Found duplicate URL in Supabase: {url}")
             return response.data[0]
 
-        # Also check normalized version
-        response = client.table("document_registry").select("*").ilike("source_url", f"%{normalized.split('://')[-1]}%").limit(1).execute()
+        # Also check normalized version - escape pattern characters for safety
+        url_path = normalized.split('://')[-1]
+        safe_url_path = url_path.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        response = client.table("document_registry").select("*").ilike("source_url", f"%{safe_url_path}%").limit(1).execute()
         if response.data:
             # Verify it's actually a match (not just contains)
             stored_url = response.data[0].get("source_url", "").strip().rstrip('/').lower()
