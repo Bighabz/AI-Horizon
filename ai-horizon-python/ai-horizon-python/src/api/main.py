@@ -41,7 +41,7 @@ from google import genai
 from google.genai import types
 
 # Supabase client for database storage
-from .supabase_client import load_artifacts, save_artifact, search_artifacts, get_stats as get_supabase_stats, check_url_duplicate, get_all_source_urls
+from .db import load_artifacts, save_artifact, search_artifacts, get_stats as get_supabase_stats, check_url_duplicate, get_all_source_urls, init_db, get_db
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -251,16 +251,16 @@ evidence_store: list[dict] = []  # In-memory cache of evidence
 
 
 def load_evidence_store():
-    """Load evidence store from Supabase (primary) or JSON file (fallback)."""
+    """Load evidence store from PostgreSQL (primary) or JSON file (fallback)."""
     global evidence_store
     try:
-        # Try Supabase first
+        # Try PostgreSQL first
         evidence_store = load_artifacts()
         if evidence_store:
-            logger.info(f"Loaded {len(evidence_store)} artifacts from Supabase")
+            logger.info(f"Loaded {len(evidence_store)} artifacts from PostgreSQL")
             return
     except Exception as e:
-        logger.warning(f"Supabase not available, falling back to JSON: {e}")
+        logger.warning(f"PostgreSQL not available, falling back to JSON: {e}")
 
     # Fallback to JSON file
     if EVIDENCE_STORE_PATH.exists():
@@ -467,7 +467,12 @@ def build_context_from_evidence(relevant_evidence: list[dict]) -> str:
     return "\n".join(context_parts)
 
 
-# Load evidence store on startup
+# Initialize database tables and load evidence store on startup
+try:
+    init_db()
+    logger.info("Database initialized successfully")
+except Exception as e:
+    logger.warning(f"Database init skipped (will use JSON fallback): {e}")
 logger.info(f"Evidence store path resolved to: {EVIDENCE_STORE_PATH.resolve()}")
 load_evidence_store()
 
@@ -2247,20 +2252,15 @@ async def list_skills():
 @app.delete("/api/admin/cleanup-incomplete")
 async def cleanup_incomplete_records(_: bool = Depends(verify_admin_key)):
     """
-    Delete records from Supabase that have no artifact_id or source_url.
+    Delete records that have no source_url.
     These are incomplete submissions that clutter the database.
     Requires X-Admin-Key header.
     """
     try:
-        from src.api.supabase_client import get_supabase
-        client = get_supabase()
-
-        # Delete records where source_url is empty or null
-        response = client.table("document_registry").delete().or_(
-            "source_url.is.null,source_url.eq."
-        ).execute()
-
-        deleted_count = len(response.data) if response.data else 0
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM document_registry WHERE source_url IS NULL OR source_url = '' RETURNING id")
+                deleted_count = cur.rowcount
 
         # Reload the evidence store
         load_evidence_store()
@@ -2280,31 +2280,15 @@ async def delete_artifact_by_id(artifact_id: str, _: bool = Depends(verify_admin
     """Delete a specific artifact by its artifact_id (format: artifact_XXXX or raw UUID).
     Requires X-Admin-Key header."""
     try:
-        from src.api.supabase_client import get_supabase
-        client = get_supabase()
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                if artifact_id.startswith("artifact_"):
+                    uuid_prefix = artifact_id.replace("artifact_", "")
+                    cur.execute("DELETE FROM document_registry WHERE CAST(id AS TEXT) LIKE %s RETURNING id", (f"{uuid_prefix}%",))
+                else:
+                    cur.execute("DELETE FROM document_registry WHERE id = %s RETURNING id", (artifact_id,))
 
-        # The artifact_id is formatted as "artifact_<first12chars_of_uuid>"
-        # We need to find the record by matching the start of the UUID
-        if artifact_id.startswith("artifact_"):
-            uuid_prefix = artifact_id.replace("artifact_", "")
-            # Search for records where id starts with this prefix
-            response = client.table("document_registry").select("id").execute()
-            matching_id = None
-            for row in response.data:
-                if row["id"].startswith(uuid_prefix):
-                    matching_id = row["id"]
-                    break
-
-            if not matching_id:
-                raise HTTPException(status_code=404, detail=f"Artifact {artifact_id} not found")
-
-            # Delete by actual UUID
-            delete_response = client.table("document_registry").delete().eq("id", matching_id).execute()
-            deleted_count = len(delete_response.data) if delete_response.data else 0
-        else:
-            # Assume it's a raw UUID
-            response = client.table("document_registry").delete().eq("id", artifact_id).execute()
-            deleted_count = len(response.data) if response.data else 0
+                deleted_count = cur.rowcount
 
         if deleted_count == 0:
             raise HTTPException(status_code=404, detail=f"Artifact {artifact_id} not found")
@@ -2329,12 +2313,10 @@ async def cleanup_untitled_artifacts(_: bool = Depends(verify_admin_key)):
     """Delete all artifacts with 'Untitled' as their title.
     Requires X-Admin-Key header."""
     try:
-        from src.api.supabase_client import get_supabase
-        client = get_supabase()
-
-        # Find and delete all untitled records
-        response = client.table("document_registry").delete().eq("file_name", "Untitled").execute()
-        deleted_count = len(response.data) if response.data else 0
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM document_registry WHERE file_name = 'Untitled' RETURNING id")
+                deleted_count = cur.rowcount
 
         # Reload the evidence store
         load_evidence_store()
@@ -2351,14 +2333,14 @@ async def cleanup_untitled_artifacts(_: bool = Depends(verify_admin_key)):
 
 @app.post("/api/admin/reload")
 async def reload_evidence_store_endpoint(_: bool = Depends(verify_admin_key)):
-    """Reload evidence store from Supabase.
+    """Reload evidence store from database.
     Requires X-Admin-Key header."""
     try:
         load_evidence_store()
         return {
             "success": True,
             "count": len(evidence_store),
-            "message": f"Reloaded {len(evidence_store)} artifacts from Supabase"
+            "message": f"Reloaded {len(evidence_store)} artifacts from database"
         }
     except Exception as e:
         logger.error(f"Reload error: {e}")
@@ -2367,26 +2349,28 @@ async def reload_evidence_store_endpoint(_: bool = Depends(verify_admin_key)):
 
 @app.get("/api/admin/list-all")
 async def list_all_artifacts(_: bool = Depends(verify_admin_key)):
-    """List all artifacts in Supabase with source URLs for cleanup review.
+    """List all artifacts with source URLs for cleanup review.
     Requires X-Admin-Key header."""
     try:
-        from src.api.supabase_client import get_supabase
-        client = get_supabase()
-
-        response = client.table("document_registry").select(
-            "id,file_name,source_url,source_type,classification,created_at,submission_type"
-        ).order("created_at", desc=True).execute()
+        import psycopg2.extras
+        with get_db() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("""
+                    SELECT id, file_name, source_url, source_type, classification, created_at, submission_type
+                    FROM document_registry ORDER BY created_at DESC
+                """)
+                rows = cur.fetchall()
 
         items = []
-        for row in response.data:
+        for row in rows:
             items.append({
-                "id": row.get("id"),
+                "id": str(row.get("id")),
                 "title": row.get("file_name"),
                 "source_url": row.get("source_url"),
                 "source_type": row.get("source_type"),
                 "classification": row.get("classification"),
                 "submission_type": row.get("submission_type"),
-                "created_at": row.get("created_at"),
+                "created_at": row.get("created_at").isoformat() if row.get("created_at") else None,
             })
 
         # Group by source domain for easy identification of bulk imports
@@ -2416,36 +2400,21 @@ async def delete_by_domain(domain: str, _: bool = Depends(verify_admin_key)):
     Requires X-Admin-Key header.
     Example: DELETE /api/admin/delete-by-domain/theaihorizon.org"""
     try:
-        from src.api.supabase_client import get_supabase
-        client = get_supabase()
-
-        # Find all records with this domain in their source_url
-        response = client.table("document_registry").select("id,source_url").execute()
-
-        ids_to_delete = []
-        for row in response.data:
-            url = row.get("source_url") or ""
-            if domain.lower() in url.lower():
-                ids_to_delete.append(row["id"])
-
-        if not ids_to_delete:
-            return {
-                "success": True,
-                "deleted_count": 0,
-                "message": f"No artifacts found from domain: {domain}"
-            }
-
-        # Delete all matching records
-        for record_id in ids_to_delete:
-            client.table("document_registry").delete().eq("id", record_id).execute()
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM document_registry WHERE source_url ILIKE %s RETURNING id",
+                    (f"%{domain}%",)
+                )
+                deleted_count = cur.rowcount
 
         # Reload the evidence store
         load_evidence_store()
 
         return {
             "success": True,
-            "deleted_count": len(ids_to_delete),
-            "message": f"Deleted {len(ids_to_delete)} artifacts from domain: {domain}"
+            "deleted_count": deleted_count,
+            "message": f"Deleted {deleted_count} artifacts from domain: {domain}"
         }
     except Exception as e:
         logger.error(f"Delete by domain error: {e}")
@@ -2454,21 +2423,20 @@ async def delete_by_domain(domain: str, _: bool = Depends(verify_admin_key)):
 
 @app.delete("/api/admin/delete-by-ids")
 async def delete_by_ids(ids: list[str], _: bool = Depends(verify_admin_key)):
-    """Delete multiple artifacts by their Supabase UUIDs.
+    """Delete multiple artifacts by their UUIDs.
     Requires X-Admin-Key header.
     Body: ["uuid1", "uuid2", ...]"""
     try:
-        from src.api.supabase_client import get_supabase
-        client = get_supabase()
-
-        deleted_count = 0
-        for record_id in ids:
-            try:
-                response = client.table("document_registry").delete().eq("id", record_id).execute()
-                if response.data:
-                    deleted_count += 1
-            except Exception as e:
-                logger.warning(f"Failed to delete {record_id}: {e}")
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                deleted_count = 0
+                for record_id in ids:
+                    try:
+                        cur.execute("DELETE FROM document_registry WHERE id = %s", (record_id,))
+                        if cur.rowcount > 0:
+                            deleted_count += 1
+                    except Exception as e:
+                        logger.warning(f"Failed to delete {record_id}: {e}")
 
         # Reload the evidence store
         load_evidence_store()
