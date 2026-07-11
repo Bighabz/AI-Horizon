@@ -1,5 +1,6 @@
 # Core
-google-genai>=0.8.0
+# File Search (types.FileSearch, client.file_search_stores) needs a modern SDK
+google-genai>=2.0.0,<3
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
 python-dotenv>=1.0.0
@@ -21,7 +22,9 @@ pdfplumber>=0.10.0
 python-docx>=1.0.0
 
 # Extraction - YouTube
-youtube-transcript-api>=0.6.0
+# Code uses the v1.x instance API (.fetch, typed exceptions, proxy_config);
+# 0.6.x lacks all of these
+youtube-transcript-api>=1.2,<2
 
 # Extraction - Web
 trafilatura>=1.6.0
