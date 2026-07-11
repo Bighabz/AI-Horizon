@@ -1,5 +1,13 @@
 # AI Horizon - Implementation Audit & Production Roadmap
 
+> **Status note (2026-07-11):** This audit predates the Railway migration and is kept
+> for historical context. Since it was written: the backend deployed to **Railway**
+> (auto-deploys from `master`), the database moved to **Railway PostgreSQL**
+> (2026-02-19, see `src/api/db.py` — Supabase is no longer used), rate limiting /
+> CORS hardening shipped, and a feed ingestion module (`src/ingestion/`) plus an
+> offline pytest suite were added. Deployment/database recommendations below are
+> therefore outdated; the API inventory is still broadly accurate.
+
 ## Current Status: Working Prototype
 
 **Date**: January 7, 2026

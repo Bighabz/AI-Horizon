@@ -49,19 +49,25 @@ Contribute to the research by submitting articles or papers about AI in cybersec
 ```
 Frontend          Backend           Database
 ─────────         ───────           ────────
-Next.js 16        FastAPI           Supabase
-Tailwind CSS v4   Gemini AI         PostgreSQL
-shadcn/ui         Python 3.11
+Next.js 16        FastAPI           Railway PostgreSQL
+Tailwind CSS v4   Gemini AI         (evidence_store.json
+shadcn/ui         Python 3.11+       fallback for local dev)
 React Query       RAG Pipeline
 ```
+
+The backend is deployed on **Railway** (auto-deploys from `master`) and uses
+**Railway PostgreSQL** as its database (migrated from Supabase in Feb 2026 —
+see `ai-horizon-python/ai-horizon-python/src/api/db.py`). When no database is
+reachable locally, the API falls back to the JSON evidence store.
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js 18+
 - Python 3.11+
-- Supabase account (free tier works)
 - Google Gemini API key
+- Optional: a PostgreSQL database (Railway provides one in production via
+  `DATABASE_URL`; local dev works without it using the JSON fallback)
 
 ### Frontend
 
@@ -77,13 +83,27 @@ npm run dev
 
 ```bash
 cd ai-horizon-python/ai-horizon-python
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
-# Add your environment variables
+# Fill in GEMINI_API_KEY (required). DATABASE_URL, ADMIN_API_KEY, and the
+# File Search store names are optional for local development —
+# see .env.example for the full list with comments.
 uvicorn src.api.main:app --reload --port 8005
 ```
+
+Key environment variables (full reference in `ai-horizon-python/ai-horizon-python/.env.example`):
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `GEMINI_API_KEY` (+`_2`, `_3`) | Yes | Gemini classification/chat (extra keys rotate on rate limits) |
+| `DATABASE_URL` | Prod | Railway PostgreSQL (injected by Railway; JSON fallback if absent) |
+| `DCWF_STORE_NAME`, `EVIDENCE_STORE_NAME`, `RESOURCES_STORE_NAME` | Prod | Gemini File Search stores for RAG |
+| `ADMIN_API_KEY` | Prod | Protects admin endpoints |
+| `DUMPLING_API_KEY`, `YOUTUBE_API_KEY` | No | Optional extraction fallbacks |
+
+In production, set all secrets as Railway environment variables — never commit `.env`.
 
 ## Research
 
