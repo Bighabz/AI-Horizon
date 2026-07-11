@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Example Atom Security Feed</title>
+  <id>urn:uuid:fixture-feed</id>
+  <updated>2026-07-09T10:00:00Z</updated>
+  <entry>
+    <title>Prompt Injection Hits Enterprise Copilots</title>
+    <link rel="self" href="https://atom.example.org/entries/prompt-injection.atom"/>
+    <link rel="alternate" type="text/html" href="https://atom.example.org/blog/prompt-injection"/>
+    <id>urn:uuid:entry-1</id>
+    <published>2026-07-09T09:15:00Z</published>
+    <updated>2026-07-09T09:20:00Z</updated>
+    <summary>Attackers abuse prompt injection against enterprise AI assistants.</summary>
+    <content type="html">&lt;p&gt;Researchers demonstrated &lt;em&gt;prompt injection&lt;/em&gt; attacks that exfiltrate data from enterprise copilots.&lt;/p&gt;</content>
+  </entry>
+  <entry>
+    <title>Zero Trust Meets Machine Identity</title>
+    <link href="https://atom.example.org/blog/zero-trust-machine-identity"/>
+    <id>urn:uuid:entry-2</id>
+    <updated>2026-07-08T16:45:00Z</updated>
+    <summary>Machine identities now outnumber humans 40 to 1 in cloud estates.</summary>
+  </entry>
+</feed>

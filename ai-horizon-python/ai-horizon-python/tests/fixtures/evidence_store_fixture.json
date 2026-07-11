@@ -1,0 +1,22 @@
+[
+  {
+    "artifact_id": "artifact_fixture00001",
+    "title": "Existing Story We Already Ingested",
+    "content": "Fixture artifact used by dedupe tests.",
+    "source_url": "https://example.com/articles/existing-story",
+    "source_type": "web",
+    "resource_type": "Article",
+    "difficulty": "Beginner",
+    "is_free": true,
+    "work_role": "Cyber Defense Analyst",
+    "submission_type": "evidence",
+    "classification": "Augment",
+    "confidence": 0.8,
+    "rationale": "Fixture rationale.",
+    "dcwf_tasks": [],
+    "work_roles": ["Cyber Defense Analyst"],
+    "key_findings": [],
+    "ai_tools_mentioned": [],
+    "stored_at": "2026-07-01T00:00:00"
+  }
+]
