@@ -44,7 +44,7 @@ def get_db():
     """Get a database connection (context manager)."""
     if not DATABASE_URL:
         raise ValueError("DATABASE_URL must be set in environment")
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(DATABASE_URL, connect_timeout=10)
     try:
         yield conn
         conn.commit()
