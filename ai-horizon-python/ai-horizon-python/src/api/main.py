@@ -11,6 +11,7 @@ Features:
 """
 
 import hashlib
+import hmac
 import json
 import logging
 import os
@@ -29,6 +30,7 @@ env_path = Path(__file__).parent.parent.parent / ".env"
 load_dotenv(env_path, override=True)
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form, Depends, Header, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -44,7 +46,7 @@ from google.genai import types
 from .db import load_artifacts, save_artifact, search_artifacts, get_stats as get_supabase_stats, check_url_duplicate, get_all_source_urls, init_db, get_db
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
 logger = logging.getLogger(__name__)
 
 
@@ -71,7 +73,7 @@ async def verify_admin_key(x_admin_key: str = Header(None, alias="X-Admin-Key"))
             status_code=503,
             detail="Admin endpoints are disabled. Set ADMIN_API_KEY in environment."
         )
-    if not x_admin_key or x_admin_key != ADMIN_API_KEY:
+    if not x_admin_key or not hmac.compare_digest(x_admin_key, ADMIN_API_KEY):
         raise HTTPException(
             status_code=401,
             detail="Invalid or missing admin API key. Provide X-Admin-Key header."
@@ -852,10 +854,11 @@ async def health():
 
 
 @app.get("/api/file-stores/stats")
-async def file_store_stats():
+async def file_store_stats(_: bool = Depends(verify_admin_key)):
     """
     Get document counts for Gemini File Search stores using REST API.
-    The SDK has a bug, so we call the API directly.
+    The SDK has a bug, so we call the API directly. Admin-only: exposes store
+    contents and would otherwise be an unauthenticated enumeration endpoint.
     """
     import httpx
 
@@ -884,7 +887,7 @@ async def file_store_stats():
             async with httpx.AsyncClient() as http_client:
                 response = await http_client.get(
                     url,
-                    params={"key": api_key},
+                    headers={"x-goog-api-key": api_key},
                     timeout=30.0
                 )
 
@@ -1457,23 +1460,29 @@ async def submit_artifact(
 
         # Check for YouTube
         if "youtube.com" in url_str or "youtu.be" in url_str:
+            from src.extraction.router import extract_youtube, NoCaptionsError, TranscriptFetchError
             try:
-                from src.extraction.router import extract_youtube
-                content = extract_youtube(url_str)
+                content = await run_in_threadpool(extract_youtube, url_str)
                 title = title or f"YouTube Video: {url_str}"
                 artifact_request.source_type = "youtube"
                 logger.info(f"Extracted YouTube transcript: {len(content)} chars")
+            except NoCaptionsError as e:
+                logger.warning(f"YouTube video has no captions: {e}")
+                raise HTTPException(status_code=400, detail="This YouTube video doesn't have captions available. Try a different video or use the Text tab to paste content manually.")
+            except TranscriptFetchError as e:
+                logger.error(f"All YouTube transcript sources failed: {e}")
+                raise HTTPException(status_code=503, detail="Couldn't fetch the transcript right now (YouTube is temporarily blocking our server). Try again in a few minutes, or paste the content via the Text tab.")
+            except ValueError as e:
+                logger.warning(f"Bad YouTube URL or unavailable video: {e}")
+                raise HTTPException(status_code=400, detail="Couldn't process this YouTube link — the video may be private, deleted, or the URL malformed. Check the link or use the Text tab.")
             except Exception as e:
                 logger.error(f"YouTube extraction failed: {e}")
-                error_msg = str(e).lower()
-                if "no transcript" in error_msg or "disabled" in error_msg or "not available" in error_msg:
-                    raise HTTPException(status_code=400, detail="This YouTube video doesn't have captions available. Try a different video or use the Text tab to paste content manually.")
-                raise HTTPException(status_code=400, detail="Could not extract YouTube transcript. The video may not have captions. Try using the Text tab instead.")
+                raise HTTPException(status_code=400, detail="Could not extract a transcript for this video. Try using the Text tab instead.")
         else:
             # Use trafilatura for web extraction
             try:
                 from src.extraction.router import extract_web
-                content = extract_web(url_str)
+                content = await run_in_threadpool(extract_web, url_str)
                 title = title or f"Web Article: {url_str}"
                 logger.info(f"Extracted web content: {len(content)} chars")
             except Exception as e:
@@ -1918,7 +1927,8 @@ async def get_evidence(task_id: str):
         return {"task_id": task_id, "evidence": [], "message": "No evidence store configured"}
     
     try:
-        response = client.models.generate_content(
+        def make_evidence_request(c):
+            return c.models.generate_content(
             model=GEMINI_MODEL,
             contents=f"""Find all evidence and artifacts related to DCWF task {task_id}.
 
@@ -1945,6 +1955,8 @@ Return as JSON array:
             ),
         )
         
+        response = call_with_retry(make_evidence_request)
+
         evidence = json.loads(response.text)
         return {"task_id": task_id, "evidence": evidence}
         
