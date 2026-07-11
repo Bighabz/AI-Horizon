@@ -20,12 +20,18 @@ GEMINI_API_KEY=your-gemini-api-key
 GEMINI_API_KEY_2=your-second-key
 GEMINI_API_KEY_3=your-third-key
 DCWF_STORE_NAME=fileSearchStores/your-store-id
-ARTIFACTS_STORE_NAME=fileSearchStores/your-artifacts-store-id
-SUPABASE_URL=https://awpeffqeuhatqkaryffh.supabase.co
-SUPABASE_SERVICE_KEY=your-service-key
+EVIDENCE_STORE_NAME=fileSearchStores/your-evidence-store-id
+RESOURCES_STORE_NAME=fileSearchStores/your-resources-store-id
+ADMIN_API_KEY=your-admin-api-key
 DUMPLING_API_KEY=your-dumpling-key
 LOG_LEVEL=INFO
 ```
+
+Add a Railway PostgreSQL plugin to the project; Railway injects `DATABASE_URL`
+automatically (use a reference variable if the database lives in another service).
+
+> Note: legacy Supabase variables (`SUPABASE_URL`, `SUPABASE_SERVICE_KEY`) are no
+> longer used - the backend migrated to Railway PostgreSQL (see `src/api/db.py`).
 
 ### 3. Deploy
 Railway will automatically:
