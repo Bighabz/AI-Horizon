@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Example Security Feed</title>
+    <link>https://example.com</link>
+    <description>Fixture feed for offline tests</description>
+    <item>
+      <title>AI Agents Take Over SOC Triage</title>
+      <link>https://example.com/articles/ai-soc-triage</link>
+      <description>&lt;p&gt;Security teams are deploying &lt;b&gt;AI agents&lt;/b&gt; to automate tier-1 alert triage &amp;amp; enrichment.&lt;/p&gt;</description>
+      <content:encoded><![CDATA[<article><p>Security teams are deploying <b>AI agents</b> to automate tier-1 alert triage &amp; enrichment across the SOC.</p><script>evil()</script><p>Analysts shift to threat hunting.</p></article>]]></content:encoded>
+      <pubDate>Wed, 08 Jul 2026 09:00:00 +0000</pubDate>
+      <guid>https://example.com/articles/ai-soc-triage</guid>
+    </item>
+    <item>
+      <title>Existing Story We Already Ingested</title>
+      <link>https://www.example.com/articles/existing-story/</link>
+      <description>This exact story already lives in the evidence store under a normalized URL.</description>
+      <pubDate>Tue, 07 Jul 2026 12:00:00 +0000</pubDate>
+      <guid>existing-story-guid</guid>
+    </item>
+    <item>
+      <title>Ransomware Crew Adopts LLM Phishing &amp; Deepfakes</title>
+      <link>https://example.com/articles/llm-phishing</link>
+      <description>Criminals now use LLMs to write phishing lures.</description>
+      <pubDate>Mon, 06 Jul 2026 08:30:00 +0000</pubDate>
+      <guid>llm-phishing-guid</guid>
+    </item>
+    <item>
+      <title>Broken Item With No Link</title>
+      <description>This item has no link element and must be skipped by the normalizer.</description>
+    </item>
+  </channel>
+</rss>
