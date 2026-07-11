@@ -1,0 +1,3 @@
+MOVED 2026-07-11: ai-horizon-frontend now lives at C:\Users\habib\projects\ai-horizon-frontend
+(moved out of OneDrive because Files On-Demand broke node_modules/builds)
+Remote: https://github.com/Bighabz/ai-horizon-frontend (private)
