@@ -45,8 +45,12 @@ from google.genai import types
 # Supabase client for database storage
 from .db import load_artifacts, save_artifact, search_artifacts, get_stats as get_supabase_stats, check_url_duplicate, get_all_source_urls, init_db, get_db
 
-# Configure logging
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
+# Configure logging. LOG_LEVEL comes from the environment, so tolerate
+# whitespace/paste artifacts and unknown names rather than crashing at import.
+_log_level = os.getenv("LOG_LEVEL", "INFO").strip().upper()
+if _log_level not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+    _log_level = "INFO"
+logging.basicConfig(level=_log_level)
 logger = logging.getLogger(__name__)
 
 
