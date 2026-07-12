@@ -123,44 +123,6 @@ def _fetch_captions(video_id: str, proxy_config=None) -> str:
     return " ".join(entry.text for entry in transcript)
 
 
-def _fetch_via_dumpling(url: str) -> str | None:
-    """
-    Dumpling.ai transcript endpoint — runs from Dumpling's infrastructure, so it
-    works even when YouTube blocks our own egress IP. Returns None when
-    unconfigured or transiently failing; raises NoCaptionsError on Dumpling's 404
-    (their confirmation that the video has no caption track).
-    """
-    import requests
-
-    api_key = os.getenv("DUMPLING_API_KEY")
-    if not api_key:
-        return None
-    try:
-        response = requests.post(
-            "https://app.dumplingai.com/api/v1/get-youtube-transcript",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            json={"videoUrl": url, "includeTimestamps": False, "preferredLanguage": "en"},
-            timeout=60,
-        )
-    except Exception as e:
-        logger.warning(f"Dumpling.ai transcript request failed: {e}")
-        return None
-
-    if response.status_code == 200:
-        text = (response.json().get("transcript") or "").strip()
-        return text or None
-    if response.status_code == 404:
-        raise NoCaptionsError(f"No captions found for video: {url}")
-    if response.status_code == 402:
-        logger.warning("Dumpling.ai account is out of credits - transcript fallback skipped")
-        return None
-    logger.warning(f"Dumpling.ai transcript returned {response.status_code}: {response.text[:200]}")
-    return None
-
-
 def _transcribe_via_gemini(url: str) -> str | None:
     """
     Last-resort ASR: Gemini ingests public YouTube URLs natively and can transcribe
@@ -199,8 +161,7 @@ def extract_youtube(url: str) -> str:
 
     1. youtube-transcript-api direct (free; YouTube blocks most datacenter IPs)
     2. youtube-transcript-api through a proxy, if one is configured in env
-    3. Dumpling.ai's transcript endpoint (their egress IP, our credits)
-    4. Gemini video understanding (ASR - works even without captions)
+    3. Gemini video understanding (ASR - works even without captions)
 
     Raises NoCaptionsError when the video verifiably has no captions and ASR is
     unavailable, TranscriptFetchError when every source failed transiently, and
@@ -240,17 +201,7 @@ def extract_youtube(url: str) -> str:
         except Exception as e:
             logger.warning(f"Unexpected transcript error on {via} fetch: {e}")
 
-    # Tier 3: Dumpling (pointless if we already know there are no captions to scrape)
-    if not no_captions:
-        try:
-            text = _fetch_via_dumpling(url)
-            if text:
-                logger.info(f"YouTube transcript via Dumpling.ai: {len(text)} chars")
-                return text
-        except NoCaptionsError:
-            no_captions = True
-
-    # Tier 4: Gemini ASR - the only tier that works on caption-less videos
+    # Tier 3: Gemini ASR - the only tier that works on caption-less videos
     text = _transcribe_via_gemini(url)
     if text:
         logger.info(
@@ -268,15 +219,9 @@ def extract_youtube(url: str) -> str:
 
 
 def extract_web(url: str) -> str:
-    """
-    Extract text content from a web page.
-
-    Tries trafilatura first (free, local), falls back to Dumpling.ai if blocked.
-    """
+    """Extract text content from a web page with trafilatura."""
     import trafilatura
-    import requests
 
-    # Try trafilatura first (free, local)
     try:
         downloaded = trafilatura.fetch_url(url)
         if downloaded:
@@ -285,31 +230,5 @@ def extract_web(url: str) -> str:
                 return text
     except Exception as e:
         logger.warning(f"Trafilatura failed for {url}: {e}")
-
-    # Fallback to Dumpling.ai if configured
-    dumpling_key = os.getenv("DUMPLING_API_KEY")
-    if dumpling_key:
-        try:
-            logger.info(f"Trying Dumpling.ai for {url}")
-            response = requests.post(
-                "https://app.dumplingai.com/api/v1/scrape",
-                headers={
-                    "Authorization": f"Bearer {dumpling_key}",
-                    "Content-Type": "application/json"
-                },
-                json={"url": url},
-                timeout=60
-            )
-            if response.status_code == 200:
-                data = response.json()
-                text = data.get("content") or data.get("text") or data.get("article", {}).get("content")
-                if text:
-                    return text
-            if response.status_code == 402:
-                logger.warning("Dumpling.ai account is out of credits - web fallback skipped")
-            else:
-                logger.warning(f"Dumpling.ai returned {response.status_code}: {response.text[:200]}")
-        except Exception as e:
-            logger.error(f"Dumpling.ai failed: {e}")
 
     raise ValueError(f"Could not extract content from URL: {url}. Try submitting the text directly.")

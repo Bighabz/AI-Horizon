@@ -3,8 +3,7 @@
 The chain (src/extraction/router.py::extract_youtube):
   1. youtube-transcript-api direct
   2. youtube-transcript-api via proxy (only if configured in env)
-  3. Dumpling.ai transcript endpoint
-  4. Gemini video ASR
+  3. Gemini video ASR
 
 Tier functions are monkeypatched, so no network is touched. The real
 youtube-transcript-api package supplies the exception types the chain
@@ -26,10 +25,9 @@ URL = "https://www.youtube.com/watch?v=abc123xyz00"
 
 
 @pytest.fixture(autouse=True)
-def no_proxy_no_keys(monkeypatch):
-    """Default: no proxy configured, no Dumpling key, Gemini fallback disabled."""
-    for var in ("WEBSHARE_PROXY_USERNAME", "WEBSHARE_PROXY_PASSWORD", "YT_PROXY_URL",
-                "DUMPLING_API_KEY"):
+def no_proxy_no_gemini(monkeypatch):
+    """Default: no proxy configured, Gemini fallback disabled."""
+    for var in ("WEBSHARE_PROXY_USERNAME", "WEBSHARE_PROXY_PASSWORD", "YT_PROXY_URL"):
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setenv("YT_GEMINI_FALLBACK", "0")
 
@@ -47,18 +45,22 @@ def test_direct_fetch_success(monkeypatch):
     assert extract_youtube(URL) == "official captions"
 
 
-def test_no_captions_is_terminal_and_skips_dumpling(monkeypatch):
+def test_no_captions_without_gemini_raises_no_captions(monkeypatch):
     def raise_disabled(vid, proxy_config=None):
         raise TranscriptsDisabled(vid)
 
-    dumpling_calls = []
     monkeypatch.setattr(router, "_fetch_captions", raise_disabled)
-    monkeypatch.setattr(router, "_fetch_via_dumpling",
-                        lambda url: dumpling_calls.append(url) or "should not be used")
-
     with pytest.raises(NoCaptionsError):
         extract_youtube(URL)
-    assert dumpling_calls == [], "Dumpling scrapes captions too; pointless when captions are disabled"
+
+
+def test_no_captions_but_gemini_asr_still_tries(monkeypatch):
+    def raise_disabled(vid, proxy_config=None):
+        raise TranscriptsDisabled(vid)
+
+    monkeypatch.setattr(router, "_fetch_captions", raise_disabled)
+    monkeypatch.setattr(router, "_transcribe_via_gemini", lambda url: "asr text from captionless video")
+    assert extract_youtube(URL) == "asr text from captionless video"
 
 
 def test_no_transcript_found_also_terminal(monkeypatch):
@@ -79,21 +81,11 @@ def test_video_unavailable_raises_value_error(monkeypatch):
         extract_youtube(URL)
 
 
-def test_ip_block_falls_back_to_dumpling(monkeypatch):
+def test_ip_block_falls_back_to_gemini(monkeypatch):
     def raise_blocked(vid, proxy_config=None):
         raise RequestBlocked(vid)
 
     monkeypatch.setattr(router, "_fetch_captions", raise_blocked)
-    monkeypatch.setattr(router, "_fetch_via_dumpling", lambda url: "dumpling transcript")
-    assert extract_youtube(URL) == "dumpling transcript"
-
-
-def test_ip_block_then_dumpling_down_then_gemini(monkeypatch):
-    def raise_blocked(vid, proxy_config=None):
-        raise RequestBlocked(vid)
-
-    monkeypatch.setattr(router, "_fetch_captions", raise_blocked)
-    monkeypatch.setattr(router, "_fetch_via_dumpling", lambda url: None)
     monkeypatch.setattr(router, "_transcribe_via_gemini", lambda url: "gemini asr transcript")
     assert extract_youtube(URL) == "gemini asr transcript"
 
@@ -103,36 +95,8 @@ def test_all_tiers_fail_raises_transient_error(monkeypatch):
         raise RequestBlocked(vid)
 
     monkeypatch.setattr(router, "_fetch_captions", raise_blocked)
-    monkeypatch.setattr(router, "_fetch_via_dumpling", lambda url: None)
     monkeypatch.setattr(router, "_transcribe_via_gemini", lambda url: None)
     with pytest.raises(TranscriptFetchError):
-        extract_youtube(URL)
-
-
-def test_dumpling_404_means_no_captions_but_gemini_still_tries(monkeypatch):
-    def raise_blocked(vid, proxy_config=None):
-        raise RequestBlocked(vid)
-
-    def dumpling_404(url):
-        raise NoCaptionsError(f"No captions found for video: {url}")
-
-    monkeypatch.setattr(router, "_fetch_captions", raise_blocked)
-    monkeypatch.setattr(router, "_fetch_via_dumpling", dumpling_404)
-    monkeypatch.setattr(router, "_transcribe_via_gemini", lambda url: "asr text from captionless video")
-    assert extract_youtube(URL) == "asr text from captionless video"
-
-
-def test_dumpling_404_without_gemini_raises_no_captions(monkeypatch):
-    def raise_blocked(vid, proxy_config=None):
-        raise RequestBlocked(vid)
-
-    def dumpling_404(url):
-        raise NoCaptionsError(f"No captions found for video: {url}")
-
-    monkeypatch.setattr(router, "_fetch_captions", raise_blocked)
-    monkeypatch.setattr(router, "_fetch_via_dumpling", dumpling_404)
-    monkeypatch.setattr(router, "_transcribe_via_gemini", lambda url: None)
-    with pytest.raises(NoCaptionsError):
         extract_youtube(URL)
 
 
@@ -155,52 +119,13 @@ def test_proxy_tier_retries_after_block(monkeypatch):
     assert calls[0] is None and calls[1] is not None
 
 
-def test_unexpected_error_still_reaches_fallbacks(monkeypatch):
+def test_unexpected_error_still_reaches_gemini(monkeypatch):
     def raise_weird(vid, proxy_config=None):
         raise RuntimeError("api surface changed under us")
 
     monkeypatch.setattr(router, "_fetch_captions", raise_weird)
-    monkeypatch.setattr(router, "_fetch_via_dumpling", lambda url: "dumpling saves the day")
-    assert extract_youtube(URL) == "dumpling saves the day"
-
-
-# --- _fetch_via_dumpling unit tests (requests mocked) ---
-
-class FakeResponse:
-    def __init__(self, status_code, payload=None, text=""):
-        self.status_code = status_code
-        self._payload = payload or {}
-        self.text = text
-
-    def json(self):
-        return self._payload
-
-
-def test_dumpling_success(monkeypatch):
-    monkeypatch.setenv("DUMPLING_API_KEY", "fake-dumpling-key")
-    monkeypatch.setattr("requests.post",
-                        lambda *a, **kw: FakeResponse(200, {"transcript": "hi there", "language": "en"}))
-    assert router._fetch_via_dumpling(URL) == "hi there"
-
-
-def test_dumpling_404_raises_no_captions(monkeypatch):
-    monkeypatch.setenv("DUMPLING_API_KEY", "fake-dumpling-key")
-    monkeypatch.setattr("requests.post",
-                        lambda *a, **kw: FakeResponse(404, {"error": "No subtitles found"}))
-    with pytest.raises(NoCaptionsError):
-        router._fetch_via_dumpling(URL)
-
-
-def test_dumpling_out_of_credits_returns_none(monkeypatch):
-    monkeypatch.setenv("DUMPLING_API_KEY", "fake-dumpling-key")
-    monkeypatch.setattr("requests.post",
-                        lambda *a, **kw: FakeResponse(402, {"error": "Not enough credits"}))
-    assert router._fetch_via_dumpling(URL) is None
-
-
-def test_dumpling_unconfigured_returns_none(monkeypatch):
-    monkeypatch.delenv("DUMPLING_API_KEY", raising=False)
-    assert router._fetch_via_dumpling(URL) is None
+    monkeypatch.setattr(router, "_transcribe_via_gemini", lambda url: "gemini saves the day")
+    assert extract_youtube(URL) == "gemini saves the day"
 
 
 def test_gemini_fallback_respects_disable_flag(monkeypatch):
