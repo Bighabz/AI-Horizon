@@ -3,19 +3,19 @@
 google-genai>=2.0.0,<3
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
-python-dotenv>=1.0.0
+python-dotenv>=1.2.3
 
 # Web Framework
-fastapi>=0.109.0
+fastapi>=0.141.1
 uvicorn[standard]>=0.27.0
-python-multipart>=0.0.6
+python-multipart>=0.0.32
 
 # CLI
 typer[all]>=0.9.0
 rich>=13.0.0
 
 # Extraction - PDF
-pypdf2>=3.0.0
+pypdf>=6.19.0,<7
 pdfplumber>=0.10.0
 
 # Extraction - DOCX
@@ -29,7 +29,7 @@ youtube-transcript-api>=1.2,<2
 # Extraction - Web
 trafilatura>=1.6.0
 beautifulsoup4>=4.12.0
-requests>=2.31.0
+requests>=2.34.2
 httpx>=0.27.0
 
 # Async
@@ -50,3 +50,9 @@ psycopg2-binary>=2.9.0
 
 # Security
 slowapi>=0.1.9
+
+# Harden parsing of untrusted research feeds and current security floors.
+defusedxml>=0.7.1
+Pillow>=12.3.0
+anyio>=4.15.1
+idna>=3.20

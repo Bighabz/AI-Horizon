@@ -1,163 +1,83 @@
-# AI Horizon - Educating into the AI Future
+# AI Horizon
 
-<p align="center">
-  <strong>Understanding How AI Transforms Cybersecurity Careers</strong>
-</p>
+AI Horizon helps answer a practical question: **how is AI changing the work people do in cybersecurity?**
 
-<p align="center">
-  <a href="https://theaihorizon.org">Website</a> •
-  <a href="#features">Features</a> •
-  <a href="#getting-started">Getting Started</a> •
-  <a href="#research">Research</a>
-</p>
+It brings research papers, articles, videos, and learning resources into one place, then connects them to cybersecurity job tasks. Researchers can review the evidence, students can explore roles, and an AI assistant can help explain what the findings mean.
 
----
+The project is part of NSF-funded research at California State University, San Bernardino, led by Dr. Vincent Nestler. I worked on the research project and built its document-processing and AI workflows.
 
-## About
+[Visit the research website](https://theaihorizon.org/) · [Run the backend](#run-it-locally) · [Developer guide](ai-horizon-python/ai-horizon-python/README.md)
 
-**AI Horizon** is an NSF-funded research project at California State University, San Bernardino (CSUSB) that analyzes how artificial intelligence is transforming the cybersecurity workforce.
+## What it does
 
-Using the **Department of Defense Cyber Workforce Framework (DCWF)**, the project maps evidence against **1,350 tasks** across **52 work roles** to assess how AI may affect cybersecurity work. DCWF and the NICE Workforce Framework are related frameworks, not interchangeable names.
-
-| Classification | Description |
+| Feature | What someone can use it for |
 | --- | --- |
-| **Replace** | Evidence suggests AI can automate the task |
-| **Augment** | AI supports a person performing the task |
-| **Remain Human** | Human judgment, accountability, or interaction remains central |
-| **New Task** | AI creates new responsibilities |
+| **Explore cybersecurity roles** | Browse tasks and skills associated with different work roles and see how the collected evidence relates to them. |
+| **Search the evidence** | Find relevant papers, articles, and other source material instead of relying on an AI answer alone. |
+| **Ask the assistant** | Discuss roles, skills, and career questions using the configured research collection. The assistant also supports quiz and learning-plan conversations. |
+| **Add research** | Submit a web page or YouTube link, or upload a PDF or Word document, for text extraction and classification. |
+| **Connect findings to job tasks** | Map evidence to the Department of Defense Cyber Workforce Framework, or DCWF: 1,350 tasks across 52 work roles. |
+| **Organize learning resources** | Associate training material with relevant tasks and roles. |
+| **Keep collecting evidence** | Read configured news and research feeds, check for duplicates, and bring new articles into the same process. |
 
-These are research classifications, not guarantees about job replacement.
+For example, a researcher could submit an article about an AI tool that reviews security alerts, see which tasks it relates to, and inspect why the model classified it as helping an analyst.
 
-## Features
+## How the classifications work
 
-### Skills Matrix
-Explore all DCWF work roles with visual breakdowns of AI impact. Filter by category, role, or classification type.
+| Label | Meaning |
+| --- | --- |
+| **Replace** | The evidence suggests AI could perform the task. |
+| **Augment** | AI helps a person do the task. |
+| **Remain Human** | Human judgment, responsibility, or interaction remains central. |
+| **New Task** | AI introduces work that was not previously part of the role. |
 
-### Evidence Library
-Browse the research papers, articles, and reports that inform our classifications. Every classification is backed by evidence.
+These labels organize research for review. They are not predictions that an entire job will disappear, and AI-generated mappings still need a person to check them.
 
-### AI Assistant
-Chat with our Gemini-powered assistant for personalized career guidance:
-- Get analysis of specific roles
-- Practice with AI-generated quizzes
-- Build career development plans
-- Understand skill gaps
+## What's in this repository
 
-### Submit Evidence and Learning Resources
-Submit articles, papers, PDFs, documents, or YouTube videos for classification and mapping to DCWF tasks. Learning resources can also be categorized by task and work role.
+This is the **Python backend**, including the research-processing code, reference data, tests, and an earlier browser interface. It uses FastAPI, Google Gemini, and PostgreSQL, with a local JSON file available for basic evidence storage.
 
-### Feed Ingestion and Video Extraction
-The Python backend includes RSS/Atom discovery with normalization and deduplication. YouTube extraction tries direct transcripts, an optional configured proxy, then Gemini video transcription. Dumpling AI was removed from the current backend.
+The newer Next.js website is maintained in a separate private repository. You can run this backend and its included interface without access to that website. Search and chat over the full research collection need your own configured Gemini File Search stores.
 
-## Repository scope
+## Run it locally
 
-This public repository contains the **Python backend, ingestion pipeline, DCWF reference data, and legacy static UI**. The Next.js application lives in the separate, private [`ai-horizon-frontend`](https://github.com/Bighabz/ai-horizon-frontend) repository; it is no longer a subdirectory of this repository.
-
-The latest backend fixes include YouTube transcription fallbacks, protected File Search administration, submission error reporting, request timeouts, and log-level normalization. The setup below matches the `master` branch.
-
-## Tech Stack
-
-```
-Frontend          Backend           Database
-─────────         ───────           ────────
-Next.js 16        FastAPI           Railway PostgreSQL
-Tailwind CSS v4   Gemini AI         (evidence_store.json
-shadcn/ui         Python 3.11+       fallback for local dev)
-React Query       RAG Pipeline
-```
-
-The backend is deployed on **Railway** (auto-deploys from `master`) and uses
-**Railway PostgreSQL** as its database (migrated from Supabase in Feb 2026 —
-see `ai-horizon-python/ai-horizon-python/src/api/db.py`). When no database is
-reachable locally, the API falls back to the JSON evidence store.
-
-## Getting Started
-
-### Prerequisites
-- Python 3.11+ for this backend
-- Node.js 20.9+ if you have access to the separate Next.js frontend
-- Google Gemini API key
-- Optional: a PostgreSQL database (Railway provides one in production via
-  `DATABASE_URL`; local dev works without it using the JSON fallback)
-
-### Frontend (separate private repository)
-
-Repository access is required. The public backend also provides a legacy static interface at `/`, so the private frontend is not required to inspect or run the backend.
-
-```bash
-git clone https://github.com/Bighabz/ai-horizon-frontend.git
-cd ai-horizon-frontend
-npm install
-cp .env.example .env.local
-# Add your environment variables
-npm run dev
-```
-
-### Backend
+You need **Git, Python 3.11 or later**, and a Gemini API key for AI features.
 
 ```bash
 git clone https://github.com/Bighabz/AI-Horizon.git
 cd AI-Horizon/ai-horizon-python/ai-horizon-python
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-# Fill in GEMINI_API_KEY (required). DATABASE_URL, ADMIN_API_KEY, and the
-# File Search store names enable their corresponding RAG features.
-# Leave DATABASE_URL empty to use the local JSON evidence fallback.
-# See .env.example for the full list with comments.
-uvicorn src.api.main:app --reload --port 8005
 ```
 
-Key environment variables (full reference in `ai-horizon-python/ai-horizon-python/.env.example`):
-
-| Variable | Required | Purpose |
-|---|---|---|
-| `GEMINI_API_KEY` (+`_2`, `_3`) | Yes | Gemini classification/chat (extra keys rotate on rate limits) |
-| `DATABASE_URL` | Prod | Railway PostgreSQL (injected by Railway; JSON fallback if absent) |
-| `DCWF_STORE_NAME`, `EVIDENCE_STORE_NAME`, `RESOURCES_STORE_NAME` | Prod | Gemini File Search stores for RAG |
-| `ADMIN_API_KEY` | Prod | Protects admin endpoints |
-| `YOUTUBE_API_KEY` | No | Optional YouTube metadata support |
-| `WEBSHARE_PROXY_USERNAME`, `WEBSHARE_PROXY_PASSWORD` or `YT_PROXY_URL` | No | Optional proxy for transcript retrieval |
-| `YT_GEMINI_FALLBACK` | No | Enable/disable Gemini video transcription fallback |
-| `LOG_LEVEL` | No | Application logging level |
-
-In production, set all secrets as Railway environment variables — never commit `.env`.
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the current API paths and deployment layout, and the [backend README](ai-horizon-python/ai-horizon-python/README.md) for CLI commands and feed ingestion.
-
-### Offline tests
+Activate the environment with `source .venv/bin/activate` on macOS/Linux or `.\.venv\Scripts\Activate.ps1` in Windows PowerShell. Then:
 
 ```bash
-cd ai-horizon-python/ai-horizon-python  # from the repository root
+python -m pip install -r requirements.txt
+python -c "from pathlib import Path; import shutil; p=Path('.env'); shutil.copyfile('.env.example',p) if not p.exists() else None"
+```
+
+Open `.env` and fill in `GEMINI_API_KEY`. For a local first run, leave `DATABASE_URL` empty to use the JSON evidence store. Remove example File Search store names until you have created your own stores; placeholder names do not connect to the research collection.
+
+Start the app:
+
+```bash
+python -m uvicorn src.api.main:app --reload --port 8005
+```
+
+Open **http://localhost:8005** for the included interface, **http://localhost:8005/docs** for interactive API documentation, or **http://localhost:8005/api/health** to check that the server is running.
+
+For a first AI request, submit a public article you can read yourself, then compare its classification with the source. Missing credentials or research stores will limit which features work. AI requests use your provider account and may incur charges.
+
+## Next steps
+
+- The [backend guide](ai-horizon-python/ai-horizon-python/README.md) covers research stores, document classification, and feed collection.
+- The [deployment guide](DEPLOYMENT.md) lists environment settings and API routes. The backend is configured for Railway.
+- [The research website](https://theaihorizon.org/) explains the broader initiative.
+
+From the backend directory, run the offline tests with:
+
+```bash
 python -m pytest tests/ -q
 ```
 
-## Research
-
-This project is part of ongoing research into workforce development in the age of AI. Our methodology includes:
-
-1. **DCWF Mapping**: Evidence and learning resources are mapped to DoD cybersecurity tasks and work roles
-2. **Evidence Collection**: Research papers, industry reports, and expert analysis
-3. **AI Classification**: Gemini-powered analysis with human verification
-4. **Continuous Updates**: Regular re-evaluation as AI capabilities evolve
-
-## Contributing
-
-We welcome contributions! Submit evidence through the web interface or:
-
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
-
-## Acknowledgments
-
-- National Science Foundation (NSF) for funding
-- CSUSB School of Computer Science & Engineering
-- NICE Workforce Framework for Cybersecurity
-
----
-
-<p align="center">
-  <sub>Built with purpose at California State University, San Bernardino</sub>
-</p>
+Keep API keys, database credentials, and machine-specific settings in local environment files or your deployment's secret settings. They do not belong in this repository.

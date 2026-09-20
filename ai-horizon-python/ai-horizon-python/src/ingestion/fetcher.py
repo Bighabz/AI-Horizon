@@ -1,12 +1,14 @@
 """RSS/Atom feed fetching and parsing.
 
-Uses stdlib ``xml.etree.ElementTree`` (feedparser is not a project dependency)
+Uses ``defusedxml`` to reject dangerous XML entity declarations
 and ``requests`` (already a dependency) for HTTP. Supports RSS 2.0 and Atom.
 """
 
 import json
 import logging
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
+from defusedxml.common import DefusedXmlException
+from xml.etree.ElementTree import Element
 from pathlib import Path
 from typing import Optional
 
@@ -54,7 +56,7 @@ def parse_feed(xml_text: str, feed_name: str) -> list[FeedEntry]:
     """
     try:
         root = ET.fromstring(xml_text)
-    except ET.ParseError as e:
+    except (ET.ParseError, DefusedXmlException) as e:
         raise ValueError(f"Invalid feed XML for '{feed_name}': {e}") from e
 
     tag = root.tag.lower()
@@ -65,14 +67,14 @@ def parse_feed(xml_text: str, feed_name: str) -> list[FeedEntry]:
     raise ValueError(f"Unrecognized feed format for '{feed_name}' (root element: {root.tag})")
 
 
-def _text(element: Optional[ET.Element]) -> str:
+def _text(element: Optional[Element]) -> str:
     """Full text of an element including nested markup text, stripped."""
     if element is None:
         return ""
     return "".join(element.itertext()).strip()
 
 
-def _parse_rss(root: ET.Element, feed_name: str) -> list[FeedEntry]:
+def _parse_rss(root: Element, feed_name: str) -> list[FeedEntry]:
     """Parse an RSS 2.0 document."""
     channel = root.find("channel")
     if channel is None:
@@ -96,7 +98,7 @@ def _parse_rss(root: ET.Element, feed_name: str) -> list[FeedEntry]:
     return entries
 
 
-def _atom_link(entry: ET.Element) -> Optional[str]:
+def _atom_link(entry: Element) -> Optional[str]:
     """Pick the best link from an Atom entry (prefer rel='alternate')."""
     links = entry.findall(f"{ATOM_NS}link")
     for link in links:
@@ -108,7 +110,7 @@ def _atom_link(entry: ET.Element) -> Optional[str]:
     return None
 
 
-def _parse_atom(root: ET.Element, feed_name: str) -> list[FeedEntry]:
+def _parse_atom(root: Element, feed_name: str) -> list[FeedEntry]:
     """Parse an Atom document."""
     entries = []
     for entry in root.findall(f"{ATOM_NS}entry"):

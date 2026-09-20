@@ -233,7 +233,7 @@ ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLO
     "https://aihorizonproject.com",
 ]
 # Add Vercel preview URLs pattern support - restricted to ai-horizon project only
-ALLOW_ORIGIN_REGEX = os.getenv("ALLOW_ORIGIN_REGEX", r"https://ai-horizon[a-z0-9-]*\.vercel\.app")
+ALLOW_ORIGIN_REGEX = os.getenv("ALLOW_ORIGIN_REGEX") or None
 
 app.add_middleware(
     CORSMiddleware,

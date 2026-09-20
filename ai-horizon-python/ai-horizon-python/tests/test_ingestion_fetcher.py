@@ -29,6 +29,11 @@ class TestLoadFeedSources:
 
 
 class TestParseRss:
+    def test_rejects_entity_expansion(self):
+        xml = '<!DOCTYPE rss [<!ENTITY secret "unexpected-data">]><rss><channel><title>&secret;</title></channel></rss>'
+        with pytest.raises(ValueError, match='Invalid feed XML'):
+            fetcher.parse_feed(xml, 'Untrusted Feed')
+
     def test_parses_all_items(self, rss_xml):
         entries = fetcher.parse_feed(rss_xml, "Example Security Feed")
         assert len(entries) == 4  # includes the linkless item; normalizer drops it later

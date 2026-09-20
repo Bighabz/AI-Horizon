@@ -1,5 +1,6 @@
 """Gemini File Search integration for RAG storage."""
 
+import tempfile
 import json
 import logging
 import time
@@ -102,7 +103,9 @@ class FileSearchStore:
             The document name/ID.
         """
         # Create a temporary JSON file
-        temp_path = Path(f"/tmp/{artifact.artifact_id}.json")
+        temp_file = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+        temp_path = Path(temp_file.name)
+        temp_file.close()
         
         # Prepare artifact data for storage
         artifact_data = {
@@ -163,7 +166,9 @@ class FileSearchStore:
             batch_num = i // batch_size + 1
             
             # Create batch file
-            temp_path = Path(f"/tmp/dcwf_batch_{batch_num}.json")
+            temp_file = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+            temp_path = Path(temp_file.name)
+            temp_file.close()
             batch_data = [task.model_dump() for task in batch]
             
             with open(temp_path, "w") as f:

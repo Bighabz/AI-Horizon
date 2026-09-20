@@ -40,3 +40,10 @@ htmlcov/
 *.temp
 .turbo/
 build_log*.txt
+
+# Private local settings and desktop artifacts
+.claude/settings.local.json
+*.lnk
+desktop.ini
+.env.*
+!.env.example

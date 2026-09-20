@@ -60,8 +60,8 @@ def extract_pdf(file_path: Path) -> str:
         return "\n\n".join(text_parts)
 
     except ImportError:
-        # Fallback to PyPDF2
-        from PyPDF2 import PdfReader
+        # Fallback to the maintained pypdf package.
+        from pypdf import PdfReader
 
         reader = PdfReader(file_path)
         text_parts = []
@@ -237,7 +237,8 @@ def extract_web(url: str) -> str:
     import trafilatura
 
     try:
-        downloaded = trafilatura.fetch_url(url)
+        from src.extraction.public_url import fetch_public_page
+        downloaded = fetch_public_page(url)
         if downloaded:
             text = trafilatura.extract(downloaded)
             if text and len(text) > 100:  # Ensure we got meaningful content

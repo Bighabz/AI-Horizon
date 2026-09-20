@@ -1,115 +1,81 @@
-# AI Horizon - Python RAG Pipeline
+# AI Horizon backend
 
-An AI-powered classification system for analyzing how artificial intelligence impacts the cybersecurity workforce, built on the DCWF (Department of Defense Cyber Workforce Framework).
+This service turns research into a searchable collection of evidence about AI and cybersecurity work. The [project overview](../../README.md) explains the features and local installation. This guide covers the parts you configure after the server starts.
 
-## Project Background
+## What happens to a submission
 
-This is an NSF-funded research project at California State University San Bernardino, led by Dr. Vincent Nestler. The goal is to collect and classify "social proof" artifacts that demonstrate AI's impact on cybersecurity jobs.
+1. The service reads a supported document, web article, or YouTube video.
+2. Gemini proposes an AI-impact classification and related cybersecurity tasks.
+3. The service checks for duplicate content and saves the result.
+4. The website can retrieve that evidence for search, role exploration, and chat.
 
-## Features
+YouTube extraction first tries available captions, then an optional configured proxy, then Gemini transcription if enabled. A generated transcript can contain mistakes, so check it against the source when accuracy matters.
 
-- **FastAPI web API**: chat, search, submit, upload, stats endpoints consumed by the Next.js frontend
-- **Multi-format extraction**: PDF, DOCX, YouTube, web articles
-- **AI Classification**: Categorize artifacts as Replace, Augment, Remain Human, or New Task
-- **DCWF Mapping**: Link artifacts to specific cybersecurity workforce tasks
-- **RAG-powered queries**: Ask questions about your classified artifacts
-- **Feed ingestion**: Pull new evidence candidates from cybersecurity RSS/Atom feeds (`src/ingestion/`)
+## Configure your research collection
 
-## Tech Stack
+`GEMINI_API_KEY` enables model calls. The File Search settings identify the collections used to retrieve supporting material:
 
-- **Python 3.11+**
-- **FastAPI + Uvicorn** (web API, deployed on Railway)
-- **Railway PostgreSQL** (`document_registry` table via psycopg2; migrated from
-  Supabase in Feb 2026 — see `src/api/db.py`. Falls back to `evidence_store.json`
-  when no database is reachable, e.g. local dev)
-- **Google Gemini API** (2.5 Flash/Pro, multi-key rotation)
-- **Gemini File Search** (Managed RAG)
-- **Typer** (CLI framework)
-- **Pydantic** (Data validation)
-- **slowapi** (rate limiting)
+| Setting | Collection |
+| --- | --- |
+| `DCWF_STORE_NAME` | Cybersecurity task and role reference material |
+| `EVIDENCE_STORE_NAME` | Research about AI's impact on tasks |
+| `RESOURCES_STORE_NAME` | Training and learning resources |
 
-## Quick Start
+`python scripts/setup_file_stores.py` creates the DCWF and evidence stores. It prints the evidence name as `ARTIFACTS_STORE_NAME`, an older name the backend still accepts; you can save that value as `EVIDENCE_STORE_NAME`. The helper creates empty stores. It does not load the full reference collection or create a resources store.
+
+The repository includes `DCWFMASTER.xlsx` and `resources.csv` at its root as reference material. Full research chat needs a configured and populated collection. The setup script's historical `import_dcwf.py` suggestion refers to a file that is not included; do not run that command.
+
+For basic local evidence storage, leave `DATABASE_URL` empty. Configure PostgreSQL for the feed ingestion workflow and a durable shared deployment. Set a new `ADMIN_API_KEY` before using protected administration endpoints.
+
+## Classify a document from the terminal
+
+From this backend directory, with the environment activated:
 
 ```bash
-# Clone and setup
-git clone <repo>
-cd ai-horizon-python/ai-horizon-python
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-# Configure
-cp .env.example .env
-# Fill in GEMINI_API_KEY (required); see .env.example for all keys.
-# DATABASE_URL is optional locally - without it the API uses evidence_store.json.
-
-# Run the API (what Railway runs in production)
-uvicorn src.api.main:app --reload --port 8005
-
-# Optional one-time setup for Gemini File Search RAG stores
-python scripts/setup_file_stores.py
-
-# CLI: classify a local document
 python -m src.main classify --file path/to/document.pdf
-
-# CLI: start chat interface
 python -m src.main chat
 ```
 
-## Feed Ingestion
+These commands use your model account and the collection settings in `.env`. For web requests and uploads, open the running service's `/docs` page to see the expected fields and try an endpoint.
 
-Pull fresh evidence candidates from the cybersecurity feeds configured in
-`src/ingestion/feeds.json` (Krebs, Schneier, The Hacker News, Dark Reading,
-Google Security Blog):
+## Collect articles from feeds
+
+Choose sources in `src/ingestion/feeds.json`, then preview a small batch:
 
 ```bash
-# Preview: fetch + normalize + dedupe, print what WOULD be ingested.
-# Makes no Gemini calls and writes nothing.
-python -m src.ingestion.run --dry-run
-
-# Cap the number of new articles
 python -m src.ingestion.run --dry-run --limit 5
+```
 
-# Real ingestion: classifies each new article with Gemini and stores it
-# through the same pipeline as /api/submit (requires GEMINI_API_KEY + DB)
+The preview fetches the configured public feeds and shows the candidates. It does not classify or save them. After reviewing the results, a real run uses Gemini and the configured database:
+
+```bash
 python -m src.ingestion.run --limit 10
 ```
 
-## Tests
+## Main API routes
 
-```bash
-python -m pytest tests/ -q
-```
+| Route | Purpose |
+| --- | --- |
+| `GET /api/health` | Check service status. |
+| `GET /api/stats` | Read collection counts. |
+| `POST /api/submit` | Submit a research URL. |
+| `POST /api/upload` | Upload a supported document. |
+| `GET` or `POST /api/search` | Search evidence and task mappings. |
+| `POST /api/chat` | Ask the assistant. |
+| `GET /api/roles`, `/api/skills`, `/api/resources` | Explore roles, skills, and learning material. |
 
-The suite is fully offline (fixture RSS/Atom XML, stubbed DB) - no API keys needed.
+See [DEPLOYMENT.md](../../DEPLOYMENT.md) and the live `/docs` page for the full route and configuration reference.
 
-## Classification Categories
+## Find the implementation
 
-| Category | Description |
-|----------|-------------|
-| **Replace** | AI will fully automate this task (>70% AI) |
-| **Augment** | AI assists but humans essential (40-70% AI) |
-| **Remain Human** | Must stay human (ethics, legal, accountability) |
-| **New Task** | AI enables new capabilities not in DCWF |
+| Directory | Responsibility |
+| --- | --- |
+| `src/api/` | Web requests and database storage |
+| `src/extraction/` | Reading articles, documents, and videos |
+| `src/classification/` | Research classification |
+| `src/ingestion/` | Feed discovery and processing |
+| `src/storage/` | Gemini File Search collections |
+| `src/agents/` | Conversational assistant |
+| `tests/` | Offline checks using sample data and mocked services |
 
-## Project Structure
-
-```
-ai-horizon-python/
-├── src/
-│   ├── api/            # FastAPI app (main.py) + PostgreSQL client (db.py)
-│   ├── extraction/     # Content extractors (PDF, DOCX, YouTube, web)
-│   ├── classification/ # AI classification logic
-│   ├── ingestion/      # RSS/Atom feed ingestion (feeds.json + dry-run CLI)
-│   ├── storage/        # Gemini File Search integration
-│   ├── agents/         # Conversational RAG agent
-│   └── utils/          # Helper functions
-├── data/
-│   └── dcwf/           # DCWF reference data
-├── scripts/            # Setup and utility scripts
-└── tests/              # Offline pytest suite (fixtures in tests/fixtures/)
-```
-
-## License
-
-Research use only - CSUSB AI Horizon Project
+Run `python -m pytest tests/ -q` before changing the service. Review source evidence and model output together; passing tests does not establish that every research classification is correct.

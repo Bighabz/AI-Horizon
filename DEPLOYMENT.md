@@ -11,7 +11,7 @@
 
 The backend deployment tracks `master`. Its Railway root directory is `ai-horizon-python/ai-horizon-python`; `railway.toml` starts Uvicorn with Railway's `PORT` and checks `/api/stats`.
 
-The broader research initiative is at [theaihorizon.org](https://theaihorizon.org/). The source frontend's default API URL is `https://api.example.com`; deployments can override it with `NEXT_PUBLIC_API_URL`.
+The broader research initiative is at [theaihorizon.org](https://theaihorizon.org/). Configure the frontend with your own backend URL through `NEXT_PUBLIC_API_URL`. Deployment hostnames are kept in private configuration.
 
 ## Local backend
 
@@ -78,7 +78,6 @@ npm run dev
 
 Use Node.js 20.9 or later. Set `NEXT_PUBLIC_API_URL=http://localhost:8005` for local backend development. Consult the frontend's own `.env.example` for its remaining public configuration.
 
-The Vercel CLI can be installed with `npm i -g vercel` for frontend environment, deployment, and log management. This repository's backend runs on Railway.
 
 ## Verification
 
