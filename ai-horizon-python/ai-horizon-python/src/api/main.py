@@ -917,7 +917,7 @@ async def file_store_stats(_: bool = Depends(verify_admin_key)):
             return {
                 "configured": True,
                 "store_name": store_name,
-                "error": str(e)
+                "error": "The operation could not be completed."
             }
 
     # Fetch all stores
@@ -971,7 +971,7 @@ async def chat(request: Request, chat_request: ChatRequest):
         relevant_evidence = search_evidence_store(current_message, limit=5)
         if relevant_evidence:
             local_context = build_context_from_evidence(relevant_evidence)
-            logger.info(f"Found {len(relevant_evidence)} relevant artifacts for query: {current_message[:50]}...")
+            logger.info("Found %d relevant artifacts for a chat request", len(relevant_evidence))
 
     # Build augmented system prompt with local context
     augmented_system_prompt = CHAT_SYSTEM_PROMPT
@@ -1117,7 +1117,7 @@ async def chat(request: Request, chat_request: ChatRequest):
                 sources=[],
             )
 
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="The request could not be completed. Please try again or contact the administrator.")
 
 
 @app.get("/api/search")
@@ -1412,7 +1412,7 @@ Return up to {search_request.limit} most relevant results."""
         error_str = str(e).lower()
         if "429" in error_str or "quota" in error_str or "rate" in error_str:
             return {"results": [], "query": search_query, "error": "Rate limit reached. Please wait a minute and try again."}
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="The request could not be completed. Please try again or contact the administrator.")
 
 
 @app.post("/api/submit", response_model=SubmitArtifactResponse)
@@ -1463,7 +1463,7 @@ async def submit_artifact(
         url_str = str(artifact_request.url)
 
         # Check for YouTube
-        if "youtube.com" in url_str or "youtu.be" in url_str:
+        if (urlparse(url_str).hostname or "").lower().rstrip(".") in {"youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be", "www.youtu.be"}:
             from src.extraction.router import extract_youtube, NoCaptionsError, TranscriptFetchError
             try:
                 content = await run_in_threadpool(extract_youtube, url_str)
@@ -1546,7 +1546,7 @@ async def submit_artifact(
             "classification": "Augment",
             "confidence": 0.5,
             "rationale": "Auto-classification failed, defaulting to Augment",
-            "error": str(e)
+            "error": "The operation could not be completed."
         }
 
     # Check relevance - if not relevant to cybersecurity/DCWF, don't store
@@ -1722,7 +1722,7 @@ async def upload_file(
         raise
     except Exception as e:
         logger.error(f"File extraction failed: {e}")
-        raise HTTPException(status_code=400, detail=f"Could not extract content from file: {e}")
+        raise HTTPException(status_code=400, detail="Could not read this document. Check its format and try again.")
 
     if not content or len(content.strip()) < 50:
         raise HTTPException(status_code=400, detail="Could not extract sufficient text from file")
@@ -1765,7 +1765,7 @@ async def upload_file(
             "classification": "Augment",
             "confidence": 0.5,
             "rationale": "Auto-classification failed, defaulting to Augment",
-            "error": str(e)
+            "error": "The operation could not be completed."
         }
 
     # Register for deduplication
@@ -1966,7 +1966,7 @@ Return as JSON array:
         
     except Exception as e:
         logger.error(f"Evidence lookup error: {e}")
-        return {"task_id": task_id, "evidence": [], "error": str(e)}
+        return {"task_id": task_id, "evidence": [], "error": "The operation could not be completed."}
 
 
 @app.get("/api/roles")
@@ -2288,7 +2288,7 @@ async def cleanup_incomplete_records(_: bool = Depends(verify_admin_key)):
         }
     except Exception as e:
         logger.error(f"Cleanup error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="The request could not be completed. Please try again or contact the administrator.")
 
 
 @app.delete("/api/admin/delete-artifact/{artifact_id}")
@@ -2321,7 +2321,7 @@ async def delete_artifact_by_id(artifact_id: str, _: bool = Depends(verify_admin
         raise
     except Exception as e:
         logger.error(f"Delete artifact error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="The request could not be completed. Please try again or contact the administrator.")
 
 
 @app.delete("/api/admin/cleanup-untitled")
@@ -2344,7 +2344,7 @@ async def cleanup_untitled_artifacts(_: bool = Depends(verify_admin_key)):
         }
     except Exception as e:
         logger.error(f"Cleanup untitled error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="The request could not be completed. Please try again or contact the administrator.")
 
 
 @app.post("/api/admin/reload")
@@ -2360,7 +2360,7 @@ async def reload_evidence_store_endpoint(_: bool = Depends(verify_admin_key)):
         }
     except Exception as e:
         logger.error(f"Reload error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="The request could not be completed. Please try again or contact the administrator.")
 
 
 @app.get("/api/admin/list-all")
@@ -2407,7 +2407,7 @@ async def list_all_artifacts(_: bool = Depends(verify_admin_key)):
         }
     except Exception as e:
         logger.error(f"List all error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="The request could not be completed. Please try again or contact the administrator.")
 
 
 @app.delete("/api/admin/delete-by-domain/{domain}")
@@ -2434,7 +2434,7 @@ async def delete_by_domain(domain: str, _: bool = Depends(verify_admin_key)):
         }
     except Exception as e:
         logger.error(f"Delete by domain error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="The request could not be completed. Please try again or contact the administrator.")
 
 
 @app.delete("/api/admin/delete-by-ids")
@@ -2452,7 +2452,7 @@ async def delete_by_ids(ids: list[str], _: bool = Depends(verify_admin_key)):
                         if cur.rowcount > 0:
                             deleted_count += 1
                     except Exception as e:
-                        logger.warning(f"Failed to delete {record_id}: {e}")
+                        logger.warning("Failed to delete a requested artifact")
 
         # Reload the evidence store
         load_evidence_store()
@@ -2465,7 +2465,7 @@ async def delete_by_ids(ids: list[str], _: bool = Depends(verify_admin_key)):
         }
     except Exception as e:
         logger.error(f"Delete by IDs error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="The request could not be completed. Please try again or contact the administrator.")
 
 
 # ============================================================================

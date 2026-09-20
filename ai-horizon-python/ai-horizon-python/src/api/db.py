@@ -142,7 +142,7 @@ def save_artifact(artifact_data: dict) -> bool:
                     artifact_data.get("extraction_method", "trafilatura"),
                 ))
 
-        logger.info(f"Saved artifact: {artifact_data.get('title', 'Untitled')} URL: {source_url[:50] if source_url else 'NONE'}")
+        logger.info("Saved an artifact")
         return True
     except Exception as e:
         logger.error(f"Failed to save artifact: {e}")
@@ -238,7 +238,7 @@ def check_url_duplicate(url: str) -> dict | None:
                 cur.execute("SELECT * FROM document_registry WHERE source_url = %s LIMIT 1", (url,))
                 row = cur.fetchone()
                 if row:
-                    logger.info(f"Found duplicate URL: {url}")
+                    logger.info("Found a duplicate source URL")
                     d = dict(row)
                     d["id"] = str(d["id"])
                     return d
@@ -255,7 +255,7 @@ def check_url_duplicate(url: str) -> dict | None:
                         stored_url = stored_url.replace('http://www.', 'http://')
 
                     if normalized == stored_url or normalized.split('://')[-1] == stored_url.split('://')[-1]:
-                        logger.info(f"Found duplicate URL (normalized): {url}")
+                        logger.info("Found a duplicate normalized source URL")
                         d = dict(row)
                         d["id"] = str(d["id"])
                         return d

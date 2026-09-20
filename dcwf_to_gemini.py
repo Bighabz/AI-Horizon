@@ -170,7 +170,7 @@ Respond ONLY with valid JSON, no markdown formatting."""
     try:
         return json.loads(content)
     except json.JSONDecodeError:
-        print(f"Warning: Could not parse JSON for task {task_id}. Raw content: {content[:200]}...")
+        print("Warning: A model response was not valid JSON; using the text fallback.")
         return {
             "task_overview": content,
             "semantic_keywords": [],
